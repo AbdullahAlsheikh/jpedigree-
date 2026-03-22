@@ -1,6 +1,7 @@
 import React, { useRef, useState, useCallback } from "react";
 import { Box } from "@mui/material";
 import { usePedigreeStore } from "../../store/pedigreeStore";
+import { COLORS } from "../../theme/colors";
 import { Individual, Partnership } from "../../types/pedigree.types";
 import IndividualSymbol from "./IndividualSymbol";
 import PartnershipLine from "./PartnershipLine";
@@ -72,9 +73,6 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
     },
     [individuals],
   );
-
-  // In PedigreeCanvas.tsx, add:
-  console.log("Connections in state:", connections);
 
   const findPartnershipAt = useCallback(
     (x: number, y: number): Partnership | null => {
@@ -245,12 +243,13 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
         width: "100%",
         height: "100vh",
         overflow: "hidden",
-        bgcolor: "#fafafa",
+        bgcolor: COLORS.canvasBg,
         position: "relative",
       }}
     >
       <svg
         ref={svgRef}
+        id="pedigree-svg"
         width="100%"
         height="100%"
         viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}

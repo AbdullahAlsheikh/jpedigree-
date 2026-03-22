@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { Delete, Add, Circle } from "@mui/icons-material";
 import { usePedigreeStore } from "../../store/pedigreeStore";
+import { COLORS, PANEL_STYLE, DISEASE_COLORS } from "../../theme/colors";
 
 const DiseasePanel: React.FC = () => {
   const {
@@ -25,15 +26,7 @@ const DiseasePanel: React.FC = () => {
   } = usePedigreeStore();
 
   const handleAddDisease = () => {
-    const colors = [
-      "#e74c3c",
-      "#3498db",
-      "#2ecc71",
-      "#f39c12",
-      "#9b59b6",
-      "#1abc9c",
-    ];
-    const color = colors[diseases.length % colors.length];
+    const color = DISEASE_COLORS[diseases.length % DISEASE_COLORS.length];
 
     addDisease({
       id: Date.now().toString(),
@@ -66,16 +59,16 @@ const DiseasePanel: React.FC = () => {
       elevation={1}
       sx={{
         position: "fixed",
-        top: 16,
-        left: 10,
+        top: 80,
+        left: 16,
         width: 280,
         maxHeight: "calc(100vh - 120px)",
         overflow: "auto",
         p: 2,
         zIndex: 1300,
-        borderRadius: 3,
-        backdropFilter: "blur(8px)",
-        backgroundColor: "rgba(255,255,255,0.85)",
+        borderRadius: PANEL_STYLE.borderRadius,
+        backdropFilter: PANEL_STYLE.backdropFilter,
+        backgroundColor: PANEL_STYLE.backgroundColor,
       }}
     >
       {/* Header */}
@@ -116,8 +109,8 @@ const DiseasePanel: React.FC = () => {
                 height: 32,
                 border:
                   currentDiseaseId === disease.id
-                    ? "3px solid blue"
-                    : "1px solid #333",
+                    ? `3px solid ${COLORS.selectionStroke}`
+                    : `1px solid ${COLORS.lineStroke}`,
                 "&:hover": {
                   bgcolor: disease.color,
                   opacity: 0.8,
@@ -143,7 +136,7 @@ const DiseasePanel: React.FC = () => {
                 height: 32,
                 border: "none",
                 cursor: "pointer",
-                borderRadius: 4,
+                borderRadius: 8,
               }}
             />
 

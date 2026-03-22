@@ -1,6 +1,7 @@
 import React from "react";
 import { Individual } from "../../types/pedigree.types";
 import { usePedigreeStore } from "../../store/pedigreeStore";
+import { COLORS } from "../../theme/colors";
 
 interface IndividualSymbolProps {
   individual: Individual;
@@ -35,7 +36,7 @@ const IndividualSymbol: React.FC<IndividualSymbolProps> = ({
             width={SYMBOL_SIZE}
             height={SYMBOL_SIZE}
             fill="white"
-            stroke="black"
+            stroke={COLORS.lineStroke}
             strokeWidth={2}
           />
         );
@@ -46,7 +47,7 @@ const IndividualSymbol: React.FC<IndividualSymbolProps> = ({
             cy={y}
             r={SYMBOL_SIZE / 2}
             fill="white"
-            stroke="black"
+            stroke={COLORS.lineStroke}
             strokeWidth={2}
           />
         );
@@ -61,7 +62,7 @@ const IndividualSymbol: React.FC<IndividualSymbolProps> = ({
             width={SYMBOL_SIZE}
             height={SYMBOL_SIZE}
             fill={diseaseColors[0]}
-            stroke="black"
+            stroke={COLORS.lineStroke}
             strokeWidth={2}
           />
         );
@@ -72,7 +73,7 @@ const IndividualSymbol: React.FC<IndividualSymbolProps> = ({
             cy={y}
             r={SYMBOL_SIZE / 2}
             fill={diseaseColors[0]}
-            stroke="black"
+            stroke={COLORS.lineStroke}
             strokeWidth={2}
           />
         );
@@ -99,7 +100,7 @@ const IndividualSymbol: React.FC<IndividualSymbolProps> = ({
               width={SYMBOL_SIZE}
               height={SYMBOL_SIZE}
               fill="none"
-              stroke="black"
+              stroke={COLORS.lineStroke}
               strokeWidth={2}
             />
           </g>
@@ -131,7 +132,7 @@ const IndividualSymbol: React.FC<IndividualSymbolProps> = ({
               cy={y}
               r={SYMBOL_SIZE / 2}
               fill="none"
-              stroke="black"
+              stroke={COLORS.lineStroke}
               strokeWidth={2}
             />
           </g>
@@ -153,7 +154,7 @@ const IndividualSymbol: React.FC<IndividualSymbolProps> = ({
             width={SYMBOL_SIZE + 6}
             height={SYMBOL_SIZE + 6}
             fill="none"
-            stroke="blue"
+            stroke={COLORS.selectionStroke}
             strokeWidth={3}
           />
         ) : (
@@ -162,7 +163,7 @@ const IndividualSymbol: React.FC<IndividualSymbolProps> = ({
             cy={individual.y}
             r={SYMBOL_SIZE / 2 + 3}
             fill="none"
-            stroke="blue"
+            stroke={COLORS.selectionStroke}
             strokeWidth={3}
           />
         ))}
@@ -173,9 +174,9 @@ const IndividualSymbol: React.FC<IndividualSymbolProps> = ({
           x={individual.x}
           y={individual.y + SYMBOL_SIZE + 12}
           textAnchor="middle"
-          fontSize="12"
-          fill="black"
-          fontFamily="Arial"
+          fontSize={COLORS.labelSize}
+          fill={COLORS.lineStroke}
+          fontFamily={COLORS.labelFont}
         >
           {individual.label}
         </text>
@@ -189,7 +190,7 @@ const IndividualSymbol: React.FC<IndividualSymbolProps> = ({
             y1={individual.y + SYMBOL_SIZE / 2}
             x2={individual.x + SYMBOL_SIZE / 2}
             y2={individual.y - SYMBOL_SIZE / 2}
-            stroke="black"
+            stroke={COLORS.lineStroke}
             strokeWidth={2}
           />
         ) : (
@@ -198,7 +199,7 @@ const IndividualSymbol: React.FC<IndividualSymbolProps> = ({
             y1={individual.y + 10 + SYMBOL_SIZE / 2}
             x2={individual.x + 10 + SYMBOL_SIZE / 2}
             y2={individual.y - 10 - SYMBOL_SIZE / 2}
-            stroke="black"
+            stroke={COLORS.lineStroke}
             strokeWidth={2}
           />
         ))}

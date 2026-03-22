@@ -1,6 +1,7 @@
 import React from "react";
 import { Paper, Typography, Box, IconButton } from "@mui/material";
 import { ExpandMore, ExpandLess } from "@mui/icons-material";
+import { COLORS, PANEL_STYLE } from "../../theme/colors";
 
 const LegendPanel: React.FC = () => {
   const [open, setOpen] = React.useState(true);
@@ -10,14 +11,14 @@ const LegendPanel: React.FC = () => {
       elevation={1}
       sx={{
         position: "fixed",
-        top: 16,
-        right: 20,
+        top: 80,
+        right: 16,
         width: 200,
         p: 2,
         zIndex: 1300,
-        borderRadius: 3,
-        backdropFilter: "blur(8px)",
-        backgroundColor: "rgba(255,255,255,0.85)",
+        borderRadius: PANEL_STYLE.borderRadius,
+        backdropFilter: PANEL_STYLE.backdropFilter,
+        backgroundColor: PANEL_STYLE.backgroundColor,
       }}
     >
       {/* Header */}
@@ -50,7 +51,7 @@ const LegendPanel: React.FC = () => {
                 width="20"
                 height="20"
                 fill="white"
-                stroke="black"
+                stroke={COLORS.lineStroke}
                 strokeWidth="2"
               />
             </svg>
@@ -65,8 +66,8 @@ const LegendPanel: React.FC = () => {
                 y="10"
                 width="20"
                 height="20"
-                fill="black"
-                stroke="black"
+                fill={COLORS.lineStroke}
+                stroke={COLORS.lineStroke}
                 strokeWidth="2"
               />
             </svg>
@@ -82,7 +83,7 @@ const LegendPanel: React.FC = () => {
                 width="20"
                 height="20"
                 fill="white"
-                stroke="black"
+                stroke={COLORS.lineStroke}
                 strokeWidth="2"
               />
               <line
@@ -90,7 +91,7 @@ const LegendPanel: React.FC = () => {
                 y1="5"
                 x2="5"
                 y2="35"
-                stroke="black"
+                stroke={COLORS.lineStroke}
                 strokeWidth="2"
               />
             </svg>
@@ -105,7 +106,7 @@ const LegendPanel: React.FC = () => {
                 cy="20"
                 r="10"
                 fill="white"
-                stroke="black"
+                stroke={COLORS.lineStroke}
                 strokeWidth="2"
               />
             </svg>
@@ -119,8 +120,8 @@ const LegendPanel: React.FC = () => {
                 cx="20"
                 cy="20"
                 r="10"
-                fill="black"
-                stroke="black"
+                fill={COLORS.lineStroke}
+                stroke={COLORS.lineStroke}
                 strokeWidth="2"
               />
             </svg>
@@ -135,7 +136,7 @@ const LegendPanel: React.FC = () => {
                 cy="20"
                 r="10"
                 fill="white"
-                stroke="black"
+                stroke={COLORS.lineStroke}
                 strokeWidth="2"
               />
               <line
@@ -143,7 +144,7 @@ const LegendPanel: React.FC = () => {
                 y1="10"
                 x2="10"
                 y2="30"
-                stroke="black"
+                stroke={COLORS.lineStroke}
                 strokeWidth="2"
               />
             </svg>
@@ -158,7 +159,7 @@ const LegendPanel: React.FC = () => {
                 y1="20"
                 x2="35"
                 y2="20"
-                stroke="black"
+                stroke={COLORS.lineStroke}
                 strokeWidth="2"
               />
             </svg>

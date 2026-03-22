@@ -35,6 +35,7 @@ import {
 } from "@mui/icons-material";
 import { usePedigreeStore } from "../../store/pedigreeStore";
 import { Mode } from "../../types/pedigree.types";
+import { PANEL_STYLE } from "../../theme/colors";
 
 const Toolbar: React.FC = () => {
   const {
@@ -49,23 +50,83 @@ const Toolbar: React.FC = () => {
     autoLayout,
   } = usePedigreeStore();
 
+  // Derive a unique toggle value so child-male and child-female are distinct
+  const toggleValue =
+    currentMode === "child" ? `child-${childGender}` : currentMode;
+
   const handleToggleMode = (
     _: React.MouseEvent<HTMLElement>,
-    newMode: Mode | null,
+    newValue: string | null,
   ) => {
-    if (newMode !== null) {
-      setMode(newMode);
+    if (newValue === null) return;
+    if (newValue === "child-male") {
+      setMode("child");
+      setChildGender("male");
+    } else if (newValue === "child-female") {
+      setMode("child");
+      setChildGender("female");
+    } else {
+      setMode(newValue as Mode);
     }
   };
 
+  const getExportClone = (): { clone: SVGSVGElement; width: number; height: number } | null => {
+    const svg = document.getElementById("pedigree-svg") as SVGSVGElement | null;
+    if (!svg) return null;
+    const { width, height } = svg.getBoundingClientRect();
+    const clone = svg.cloneNode(true) as SVGSVGElement;
+    clone.setAttribute("width", String(width));
+    clone.setAttribute("height", String(height));
+    // Add white background
+    const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    bg.setAttribute("width", "100%");
+    bg.setAttribute("height", "100%");
+    bg.setAttribute("fill", "white");
+    clone.insertBefore(bg, clone.firstChild);
+    return { clone, width, height };
+  };
+
+  const triggerDownload = (url: string, filename: string) => {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   const handleExportSVG = () => {
-    // TODO: Implement SVG export
-    alert("SVG export will be implemented with backend integration");
+    const result = getExportClone();
+    if (!result) return;
+    const svgStr = new XMLSerializer().serializeToString(result.clone);
+    const blob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    triggerDownload(url, "pedigree.svg");
+    URL.revokeObjectURL(url);
   };
 
   const handleExportPNG = () => {
-    // TODO: Implement PNG export
-    alert("PNG export will be implemented with backend integration");
+    const result = getExportClone();
+    if (!result) return;
+    const { clone, width, height } = result;
+    const svgStr = new XMLSerializer().serializeToString(clone);
+    const blob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
+    const svgUrl = URL.createObjectURL(blob);
+    const dpr = window.devicePixelRatio || 1;
+    const canvas = document.createElement("canvas");
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) { URL.revokeObjectURL(svgUrl); return; }
+    ctx.scale(dpr, dpr);
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(svgUrl);
+      triggerDownload(canvas.toDataURL("image/png"), "pedigree.png");
+    };
+    img.onerror = () => URL.revokeObjectURL(svgUrl);
+    img.src = svgUrl;
   };
 
   const handleZoomIn = () => {
@@ -108,13 +169,13 @@ const Toolbar: React.FC = () => {
           px: 1.5,
           py: 0.5,
           borderRadius: 3,
-          backdropFilter: "blur(8px)",
-          backgroundColor: "rgba(255,255,255,0.85)",
+          backdropFilter: PANEL_STYLE.backdropFilter,
+          backgroundColor: PANEL_STYLE.backgroundColor,
         }}
       >
         <ToggleButtonGroup
           size="small"
-          value={currentMode}
+          value={toggleValue}
           exclusive
           onChange={handleToggleMode}
           sx={{
@@ -141,7 +202,7 @@ const Toolbar: React.FC = () => {
             <Woman />
           </ToggleButton>
 
-          <ToggleButton value="child" onClick={() => setChildGender("male")}>
+          <ToggleButton value="child-male">
             <Box sx={{ position: "relative", width: 24, height: 24 }}>
               <ChildCare />
               <Male
@@ -150,14 +211,14 @@ const Toolbar: React.FC = () => {
                   bottom: -2,
                   right: -2,
                   fontSize: 12,
-                  backgroundColor: "white",
+                  backgroundColor: PANEL_STYLE.backgroundColor,
                   borderRadius: "50%",
                 }}
               />
             </Box>
           </ToggleButton>
 
-          <ToggleButton value="child" onClick={() => setChildGender("female")}>
+          <ToggleButton value="child-female">
             <Box sx={{ position: "relative", width: 24, height: 24 }}>
               <ChildCare />
               <Female
@@ -166,7 +227,7 @@ const Toolbar: React.FC = () => {
                   bottom: -2,
                   right: -2,
                   fontSize: 12,
-                  backgroundColor: "white",
+                  backgroundColor: PANEL_STYLE.backgroundColor,
                   borderRadius: "50%",
                 }}
               />
@@ -214,13 +275,26 @@ const Toolbar: React.FC = () => {
           px: 1.5,
           py: 0.5,
           borderRadius: 3,
-          backdropFilter: "blur(8px)",
-          backgroundColor: "rgba(255,255,255,0.85)",
+          backdropFilter: PANEL_STYLE.backdropFilter,
+          backgroundColor: PANEL_STYLE.backgroundColor,
         }}
       >
-        <IconButton size="small" onClick={handleExportPNG}>
-          <Download />
-        </IconButton>
+        <Button
+          size="small"
+          startIcon={<Download />}
+          onClick={handleExportPNG}
+          sx={{ textTransform: "none", fontSize: 12 }}
+        >
+          PNG
+        </Button>
+        <Button
+          size="small"
+          startIcon={<Download />}
+          onClick={handleExportSVG}
+          sx={{ textTransform: "none", fontSize: 12 }}
+        >
+          SVG
+        </Button>
       </Paper>
     </Box>
   );

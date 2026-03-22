@@ -315,10 +315,11 @@ export const usePedigreeStore = create<PedigreeStore>()(
         roots.forEach((root) => assignGeneration(root, 0));
 
         // Layout parameters
-        const generationSpacing = 100;
-        const individualSpacing = 80;
-        const startY = 100;
-        const startX = 100;
+        const partnerGap = 70;
+        const siblingSpacing = 90;
+        const familySeparation = 100;
+        const generationSpacing = 160;
+        const startY = 150;
         const canvasWidth = 1200;
 
         const maxGeneration =
@@ -326,48 +327,182 @@ export const usePedigreeStore = create<PedigreeStore>()(
             ? Math.max(...Array.from(generationMap.keys()))
             : 0;
 
-        for (let gen = 0; gen <= maxGeneration; gen++) {
-          const individualsInGen = generationMap.get(gen) || [];
-          if (individualsInGen.length === 0) continue;
+        const xOf = new Map<string, number>();
+        const yOf = new Map<string, number>();
 
+        // Returns siblings of `id` that are in `indsInGen` (same parent partnership)
+        const getSiblings = (id: string, indsInGen: Individual[]) => {
+          const conn = state.connections.find((c) => c.childId === id);
+          if (!conn) return [];
+          return state.connections
+            .filter(
+              (c) => c.partnershipId === conn.partnershipId && c.childId !== id,
+            )
+            .map((c) => indsInGen.find((i) => i.id === c.childId))
+            .filter(Boolean) as Individual[];
+        };
+
+        // ── Bottom-up layout ──────────────────────────────────────────────
+        for (let gen = maxGeneration; gen >= 0; gen--) {
+          const indsInGen = generationMap.get(gen) || [];
           const y = startY + gen * generationSpacing;
+          indsInGen.forEach((ind) => yOf.set(ind.id, y));
 
-          // Center this generation
-          const totalWidth = (individualsInGen.length - 1) * individualSpacing;
-          let x = startX + canvasWidth / 2 - totalWidth / 2;
+          if (gen === maxGeneration) {
+            // Leaf generation: group by sibling group, place left-to-right
+            const inGroup = new Set<string>();
+            const groups: Individual[][] = [];
 
-          // Group by partnerships
-          const partnered = new Set<string>();
-
-          state.partnerships.forEach((p) => {
-            const ind1 = individualsInGen.find((i) => i.id === p.individual1Id);
-            const ind2 = individualsInGen.find((i) => i.id === p.individual2Id);
-
-            if (ind1 && ind2) {
-              if (!partnered.has(ind1.id)) {
-                ind1.x = x;
-                ind1.y = y;
-                partnered.add(ind1.id);
-                x += individualSpacing / 2;
+            state.partnerships.forEach((p) => {
+              const sibs = state.connections
+                .filter((c) => c.partnershipId === p.id)
+                .map((c) => indsInGen.find((i) => i.id === c.childId))
+                .filter(Boolean) as Individual[];
+              if (sibs.length > 0) {
+                groups.push(sibs);
+                sibs.forEach((s) => inGroup.add(s.id));
               }
-              if (!partnered.has(ind2.id)) {
-                ind2.x = x;
-                ind2.y = y;
-                partnered.add(ind2.id);
-                x += individualSpacing;
-              }
-            }
-          });
+            });
+            indsInGen.forEach((ind) => {
+              if (!inGroup.has(ind.id)) groups.push([ind]);
+            });
 
-          // Place non-partnered individuals
-          individualsInGen.forEach((ind) => {
-            if (!partnered.has(ind.id)) {
-              ind.x = x;
-              ind.y = y;
-              x += individualSpacing;
-            }
-          });
+            let curX = 0;
+            groups.forEach((group, gIdx) => {
+              if (gIdx > 0) curX += familySeparation;
+              group.forEach((ind, idx) => {
+                if (idx > 0) curX += siblingSpacing;
+                xOf.set(ind.id, curX);
+              });
+            });
+
+            const offset = canvasWidth / 2 - curX / 2;
+            indsInGen.forEach((ind) =>
+              xOf.set(ind.id, (xOf.get(ind.id) ?? 0) + offset),
+            );
+          } else {
+            // Upper generation: center each couple over their children,
+            // then immediately place unplaced siblings adjacent to them.
+            const pairsInGen = state.partnerships.filter(
+              (p) =>
+                indsInGen.some((i) => i.id === p.individual1Id) &&
+                indsInGen.some((i) => i.id === p.individual2Id),
+            );
+
+            const pairCenters: { p: Partnership; cx: number }[] = [];
+            const pairsWithChildren = new Set<string>();
+
+            pairsInGen.forEach((p) => {
+              const childXs = state.connections
+                .filter((c) => c.partnershipId === p.id)
+                .map((c) => xOf.get(c.childId))
+                .filter((x): x is number => x !== undefined);
+              if (childXs.length > 0) {
+                const cx = childXs.reduce((a, b) => a + b, 0) / childXs.length;
+                pairCenters.push({ p, cx });
+                pairsWithChildren.add(p.id);
+              }
+            });
+
+            pairCenters.sort((a, b) => a.cx - b.cx);
+
+            const placed = new Set<string>();
+
+            pairCenters.forEach(({ p, cx }) => {
+              // Place the couple
+              if (!placed.has(p.individual1Id)) {
+                xOf.set(p.individual1Id, cx - partnerGap / 2);
+                placed.add(p.individual1Id);
+              }
+              if (!placed.has(p.individual2Id)) {
+                xOf.set(p.individual2Id, cx + partnerGap / 2);
+                placed.add(p.individual2Id);
+              }
+
+              // Place unplaced siblings of individual1 to the LEFT
+              const sibs1 = getSiblings(p.individual1Id, indsInGen).filter(
+                (s) => !placed.has(s.id),
+              );
+              let leftX = (xOf.get(p.individual1Id) ?? 0) - siblingSpacing;
+              sibs1.forEach((sib) => {
+                xOf.set(sib.id, leftX);
+                placed.add(sib.id);
+                leftX -= siblingSpacing;
+              });
+
+              // Place unplaced siblings of individual2 to the RIGHT
+              const sibs2 = getSiblings(p.individual2Id, indsInGen).filter(
+                (s) => !placed.has(s.id),
+              );
+              let rightX = (xOf.get(p.individual2Id) ?? 0) + siblingSpacing;
+              sibs2.forEach((sib) => {
+                xOf.set(sib.id, rightX);
+                placed.add(sib.id);
+                rightX += siblingSpacing;
+              });
+            });
+
+            // Couples with no children in the next generation
+            pairsInGen
+              .filter((p) => !pairsWithChildren.has(p.id))
+              .forEach((p) => {
+                if (placed.has(p.individual1Id) || placed.has(p.individual2Id))
+                  return;
+                const maxX =
+                  placed.size > 0
+                    ? Math.max(...[...placed].map((id) => xOf.get(id) ?? 0))
+                    : canvasWidth / 2;
+                xOf.set(p.individual1Id, maxX + familySeparation);
+                xOf.set(
+                  p.individual2Id,
+                  maxX + familySeparation + partnerGap,
+                );
+                placed.add(p.individual1Id);
+                placed.add(p.individual2Id);
+              });
+
+            // Remaining solo individuals
+            indsInGen.forEach((ind) => {
+              if (placed.has(ind.id)) return;
+              const maxX =
+                placed.size > 0
+                  ? Math.max(...[...placed].map((id) => xOf.get(id) ?? 0))
+                  : canvasWidth / 2;
+              xOf.set(ind.id, maxX + familySeparation);
+              placed.add(ind.id);
+            });
+          }
         }
+
+        // ── Overlap resolution sweep ──────────────────────────────────────
+        // Push individuals apart within each generation if they are too close.
+        // Shift propagates rightward within the generation only (positions are
+        // already semantically correct; this is just a collision guard).
+        const minGap = 65;
+        for (let gen = 0; gen <= maxGeneration; gen++) {
+          const sorted = (generationMap.get(gen) ?? [])
+            .slice()
+            .sort((a, b) => (xOf.get(a.id) ?? 0) - (xOf.get(b.id) ?? 0));
+
+          for (let i = 1; i < sorted.length; i++) {
+            const prevX = xOf.get(sorted[i - 1].id) ?? 0;
+            const currX = xOf.get(sorted[i].id) ?? 0;
+            if (currX - prevX < minGap) {
+              const shift = minGap - (currX - prevX);
+              for (let j = i; j < sorted.length; j++) {
+                xOf.set(sorted[j].id, (xOf.get(sorted[j].id) ?? 0) + shift);
+              }
+            }
+          }
+        }
+
+        // Apply positions
+        state.individuals.forEach((ind) => {
+          if (xOf.has(ind.id)) {
+            ind.x = xOf.get(ind.id)!;
+            ind.y = yOf.get(ind.id)!;
+          }
+        });
       }),
   })),
 );

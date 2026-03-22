@@ -6,18 +6,51 @@ import FloatingTopToolbar from "./components/Panels/FloatingTopToolbar";
 import PedigreeCanvas from "./components/Canvas/PedigreeCanvas";
 import DiseasePanel from "./components/Panels/DiseasePanel";
 import LegendPanel from "./components/Panels/LegendPanel";
+import { palette, COLORS } from "./theme/colors";
 
 const theme = createTheme({
   palette: {
     mode: "light",
-    primary: {
-      main: "#3498db",
+    primary:   { main: palette.primary.main,   light: palette.primary.light,   dark: palette.primary.dark },
+    secondary: { main: palette.secondary.main, light: palette.secondary.light, dark: palette.secondary.dark },
+    error:     { main: palette.error.main },
+    warning:   { main: palette.warning.main },
+    info:      { main: palette.info.main },
+    text: {
+      primary:   palette.slate800,
+      secondary: palette.slate500,
     },
-    secondary: {
-      main: "#2ecc71",
+    background: {
+      default: COLORS.canvasBg,
+      paper:   "#F1F5F9",
     },
-    error: {
-      main: "#e74c3c",
+  },
+  typography: {
+    fontFamily: COLORS.labelFont,
+    fontSize:   14,
+    h6: {
+      fontSize:   "0.875rem",
+      fontWeight: 600,
+    },
+  },
+  components: {
+    MuiToggleButton: {
+      styleOverrides: {
+        root: {
+          "&.Mui-selected": {
+            color:           palette.primary.main,
+            backgroundColor: `${palette.primary.main}18`,
+          },
+          "&.Mui-selected:hover": {
+            backgroundColor: `${palette.primary.main}28`,
+          },
+        },
+      },
+    },
+    MuiDivider: {
+      styleOverrides: {
+        root: { borderColor: palette.slate200 },
+      },
     },
   },
 });

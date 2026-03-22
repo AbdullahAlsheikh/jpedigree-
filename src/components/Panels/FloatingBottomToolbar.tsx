@@ -13,6 +13,7 @@ import {
   ToggleButtonGroup,
   Divider,
 } from "@mui/material";
+import { PANEL_STYLE } from "../../theme/colors";
 import {
   Man,
   Woman,
@@ -48,25 +49,6 @@ const Toolbar: React.FC = () => {
     undo,
     autoLayout,
   } = usePedigreeStore();
-
-  const handleToggleMode = (
-    _: React.MouseEvent<HTMLElement>,
-    newMode: Mode | null,
-  ) => {
-    if (newMode !== null) {
-      setMode(newMode);
-    }
-  };
-
-  const handleExportSVG = () => {
-    // TODO: Implement SVG export
-    alert("SVG export will be implemented with backend integration");
-  };
-
-  const handleExportPNG = () => {
-    // TODO: Implement PNG export
-    alert("PNG export will be implemented with backend integration");
-  };
 
   const handleZoomIn = () => {
     setScale(Math.min(scale * 1.2, 5));
@@ -105,8 +87,8 @@ const Toolbar: React.FC = () => {
           px: 1.5,
           py: 0.5,
           borderRadius: 3,
-          backdropFilter: "blur(8px)",
-          backgroundColor: "rgba(255,255,255,0.85)",
+          backdropFilter: PANEL_STYLE.backdropFilter,
+          backgroundColor: PANEL_STYLE.backgroundColor,
         }}
       >
         <IconButton onClick={handleZoomIn}>

@@ -1,6 +1,7 @@
 import React from "react";
 import { Partnership } from "../../types/pedigree.types";
 import { usePedigreeStore } from "../../store/pedigreeStore";
+import { COLORS } from "../../theme/colors";
 
 interface PartnershipLineProps {
   partnership: Partnership;
@@ -31,8 +32,8 @@ const PartnershipLine: React.FC<PartnershipLineProps> = ({
       y1={individual1.y}
       x2={individual2.x}
       y2={individual2.y}
-      stroke={isSelected ? "blue" : "black"}
-      strokeWidth={isSelected ? 4 : 2}
+      stroke={isSelected ? COLORS.selectionStroke : COLORS.lineStroke}
+      strokeWidth={isSelected ? 3 : 2}
     />
   );
 };
