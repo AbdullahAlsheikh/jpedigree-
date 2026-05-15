@@ -10,12 +10,40 @@ interface ConnectionLineProps {
 const ConnectionLine: React.FC<ConnectionLineProps> = ({ connection }) => {
   const { individuals, partnerships } = usePedigreeStore();
 
+  const child = individuals.find((ind) => ind.id === connection.childId);
+  if (!child) return null;
+
+  // Single-parent connection
+  if (connection.parentId) {
+    const parent = individuals.find((ind) => ind.id === connection.parentId);
+    if (!parent) return null;
+    return (
+      <g>
+        <line
+          x1={parent.x}
+          y1={parent.y}
+          x2={parent.x}
+          y2={child.y}
+          stroke={COLORS.lineStroke}
+          strokeWidth={2}
+        />
+        <line
+          x1={parent.x}
+          y1={child.y}
+          x2={child.x}
+          y2={child.y}
+          stroke={COLORS.lineStroke}
+          strokeWidth={2}
+        />
+      </g>
+    );
+  }
+
+  // Partnership connection
   const partnership = partnerships.find(
     (p) => p.id === connection.partnershipId,
   );
-  const child = individuals.find((ind) => ind.id === connection.childId);
-
-  if (!partnership || !child) return null;
+  if (!partnership) return null;
 
   const parent1 = individuals.find(
     (ind) => ind.id === partnership.individual1Id,

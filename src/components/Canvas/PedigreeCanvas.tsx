@@ -22,6 +22,7 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
   const [isPanning, setIsPanning] = useState(false);
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
   const [viewBox, setViewBox] = useState({ x: 0, y: 0, width, height });
+  const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
 
   const {
     individuals,
@@ -196,12 +197,18 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
         }
       }
     } else if (currentMode === "child") {
-      if (!selectedPartnership) {
-        const partnership = findPartnershipAt(pos.x, pos.y);
-        if (partnership) {
-          setSelectedPartnership(partnership.id);
+      if (!selectedPartnership && !selectedParentId) {
+        const individual = findIndividualAt(pos.x, pos.y);
+        if (individual) {
+          setSelectedParentId(individual.id);
+          setSelectedIndividuals([individual]);
+        } else {
+          const partnership = findPartnershipAt(pos.x, pos.y);
+          if (partnership) {
+            setSelectedPartnership(partnership.id);
+          }
         }
-      } else {
+      } else if (selectedPartnership) {
         saveHistory();
         const child: Individual = {
           id: Date.now().toString(),
@@ -220,6 +227,29 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
           childId: child.id,
         });
         setSelectedPartnership(null);
+      } else if (selectedParentId) {
+        const clickedIndividual = findIndividualAt(pos.x, pos.y);
+        if (!clickedIndividual) {
+          saveHistory();
+          const child: Individual = {
+            id: Date.now().toString(),
+            x: pos.x,
+            y: pos.y,
+            sex: childGender,
+            label: "",
+            diseases: [],
+            affected: false,
+            deceased: false,
+          };
+          addIndividual(child);
+          addConnection({
+            id: Date.now().toString(),
+            parentId: selectedParentId,
+            childId: child.id,
+          });
+          setSelectedParentId(null);
+          setSelectedIndividuals([]);
+        }
       }
     }
   };

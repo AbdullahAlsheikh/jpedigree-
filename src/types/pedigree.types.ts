@@ -17,7 +17,8 @@ export interface Partnership {
 
 export interface Connection {
   id: string;
-  partnershipId: string;
+  partnershipId?: string;
+  parentId?: string;
   childId: string;
 }
 
@@ -25,6 +26,18 @@ export interface Disease {
   id: string;
   name: string;
   color: string;
+}
+
+export interface LayoutSettings {
+  partnerGap: number;
+  siblingSpacing: number;
+  familySeparation: number;
+  generationSpacing: number;
+}
+
+export interface AppSettings {
+  exportFilename: string;
+  layout: LayoutSettings;
 }
 
 export interface PedigreeState {

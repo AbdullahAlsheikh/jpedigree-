@@ -1,17 +1,19 @@
-import React from "react";
+import React, { useState } from "react";
 import {
-  AppBar,
-  Toolbar as MuiToolbar,
-  Typography,
-  ButtonGroup,
   Button,
   Box,
   IconButton,
   Paper,
-  Tooltip,
   ToggleButton,
   ToggleButtonGroup,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Typography,
+  Stack,
 } from "@mui/material";
 import {
   Man,
@@ -19,32 +21,34 @@ import {
   Favorite,
   FaceRetouchingOff,
   ChildCare,
-  OpenWith,
   LocalHospital,
   Delete,
   AutoFixHigh,
   Download,
   Clear,
   Undo,
-  ZoomIn,
-  ZoomOut,
-  RestartAlt,
   PanTool,
   Male,
   Female,
+  Settings,
 } from "@mui/icons-material";
 import { usePedigreeStore } from "../../store/pedigreeStore";
 import { Mode } from "../../types/pedigree.types";
 import { PANEL_STYLE } from "../../theme/colors";
 
 const Toolbar: React.FC = () => {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
   const {
     currentMode,
     childGender,
     scale,
+    settings,
     setMode,
     setChildGender,
     setScale,
+    updateSettings,
+    updateLayoutSettings,
     clear,
     undo,
     autoLayout,
@@ -70,7 +74,11 @@ const Toolbar: React.FC = () => {
     }
   };
 
-  const getExportClone = (): { clone: SVGSVGElement; width: number; height: number } | null => {
+  const getExportClone = (): {
+    clone: SVGSVGElement;
+    width: number;
+    height: number;
+  } | null => {
     const svg = document.getElementById("pedigree-svg") as SVGSVGElement | null;
     if (!svg) return null;
     const { width, height } = svg.getBoundingClientRect();
@@ -101,7 +109,7 @@ const Toolbar: React.FC = () => {
     const svgStr = new XMLSerializer().serializeToString(result.clone);
     const blob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    triggerDownload(url, "pedigree.svg");
+    triggerDownload(url, `${settings.exportFilename}.svg`);
     URL.revokeObjectURL(url);
   };
 
@@ -117,13 +125,19 @@ const Toolbar: React.FC = () => {
     canvas.width = width * dpr;
     canvas.height = height * dpr;
     const ctx = canvas.getContext("2d");
-    if (!ctx) { URL.revokeObjectURL(svgUrl); return; }
+    if (!ctx) {
+      URL.revokeObjectURL(svgUrl);
+      return;
+    }
     ctx.scale(dpr, dpr);
     const img = new Image();
     img.onload = () => {
       ctx.drawImage(img, 0, 0, width, height);
       URL.revokeObjectURL(svgUrl);
-      triggerDownload(canvas.toDataURL("image/png"), "pedigree.png");
+      triggerDownload(
+        canvas.toDataURL("image/png"),
+        `${settings.exportFilename}.png`,
+      );
     };
     img.onerror = () => URL.revokeObjectURL(svgUrl);
     img.src = svgUrl;
@@ -264,22 +278,12 @@ const Toolbar: React.FC = () => {
         <IconButton size="small" onClick={handleClear}>
           <Clear />
         </IconButton>
-      </Paper>
 
-      <Paper
-        elevation={1}
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-          px: 1.5,
-          py: 0.5,
-          borderRadius: 3,
-          backdropFilter: PANEL_STYLE.backdropFilter,
-          backgroundColor: PANEL_STYLE.backgroundColor,
-        }}
-      >
-        <Button
+        <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+        <IconButton size="small" onClick={handleExportSVG}>
+          <Download />
+        </IconButton>
+        {/* <Button
           size="small"
           startIcon={<Download />}
           onClick={handleExportPNG}
@@ -294,8 +298,95 @@ const Toolbar: React.FC = () => {
           sx={{ textTransform: "none", fontSize: 12 }}
         >
           SVG
-        </Button>
+        </Button> */}
+
+        <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+
+        <IconButton size="small" onClick={() => setSettingsOpen(true)}>
+          <Settings />
+        </IconButton>
       </Paper>
+
+      {/* Settings Dialog */}
+      <Dialog
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Settings</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <Typography variant="subtitle2" color="text.secondary">
+              Export
+            </Typography>
+            <TextField
+              label="File Name"
+              size="small"
+              value={settings.exportFilename}
+              onChange={(e) =>
+                updateSettings({ exportFilename: e.target.value })
+              }
+              helperText="Used for PNG and SVG downloads"
+            />
+
+            <Typography
+              variant="subtitle2"
+              color="text.secondary"
+              sx={{ pt: 1 }}
+            >
+              Auto Layout
+            </Typography>
+            <TextField
+              label="Partner Gap"
+              size="small"
+              type="number"
+              value={settings.layout.partnerGap}
+              onChange={(e) =>
+                updateLayoutSettings({ partnerGap: Number(e.target.value) })
+              }
+              helperText="Horizontal space between partners"
+            />
+            <TextField
+              label="Sibling Spacing"
+              size="small"
+              type="number"
+              value={settings.layout.siblingSpacing}
+              onChange={(e) =>
+                updateLayoutSettings({ siblingSpacing: Number(e.target.value) })
+              }
+              helperText="Horizontal space between siblings"
+            />
+            <TextField
+              label="Family Separation"
+              size="small"
+              type="number"
+              value={settings.layout.familySeparation}
+              onChange={(e) =>
+                updateLayoutSettings({
+                  familySeparation: Number(e.target.value),
+                })
+              }
+              helperText="Extra space between family groups"
+            />
+            <TextField
+              label="Generation Spacing"
+              size="small"
+              type="number"
+              value={settings.layout.generationSpacing}
+              onChange={(e) =>
+                updateLayoutSettings({
+                  generationSpacing: Number(e.target.value),
+                })
+              }
+              helperText="Vertical space between generations"
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSettingsOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

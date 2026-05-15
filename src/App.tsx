@@ -11,25 +11,33 @@ import { palette, COLORS } from "./theme/colors";
 const theme = createTheme({
   palette: {
     mode: "light",
-    primary:   { main: palette.primary.main,   light: palette.primary.light,   dark: palette.primary.dark },
-    secondary: { main: palette.secondary.main, light: palette.secondary.light, dark: palette.secondary.dark },
-    error:     { main: palette.error.main },
-    warning:   { main: palette.warning.main },
-    info:      { main: palette.info.main },
+    primary: {
+      main: palette.primary.main,
+      light: palette.primary.light,
+      dark: palette.primary.dark,
+    },
+    secondary: {
+      main: palette.secondary.main,
+      light: palette.secondary.light,
+      dark: palette.secondary.dark,
+    },
+    error: { main: palette.error.main },
+    warning: { main: palette.warning.main },
+    info: { main: palette.info.main },
     text: {
-      primary:   palette.slate800,
+      primary: palette.slate800,
       secondary: palette.slate500,
     },
     background: {
       default: COLORS.canvasBg,
-      paper:   "#F1F5F9",
+      paper: "#F1F5F9",
     },
   },
   typography: {
     fontFamily: COLORS.labelFont,
-    fontSize:   14,
+    fontSize: 14,
     h6: {
-      fontSize:   "0.875rem",
+      fontSize: "0.875rem",
       fontWeight: 600,
     },
   },
@@ -38,7 +46,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           "&.Mui-selected": {
-            color:           palette.primary.main,
+            color: palette.primary.main,
             backgroundColor: `${palette.primary.main}18`,
           },
           "&.Mui-selected:hover": {
@@ -75,7 +83,7 @@ const App: React.FC = () => {
           <DiseasePanel />
         </Box>
 
-        <FloatingBottomToolbar />
+        {/* <FloatingBottomToolbar /> */}
 
         {/* Instructions */}
         {/* <Box

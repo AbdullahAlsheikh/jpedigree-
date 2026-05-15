@@ -6,6 +6,8 @@ import {
   Connection,
   Disease,
   Mode,
+  AppSettings,
+  LayoutSettings,
 } from "../types/pedigree.types";
 
 interface PedigreeStore {
@@ -53,6 +55,10 @@ interface PedigreeStore {
   toggleDiseaseForIndividual: (individualId: string, diseaseId: string) => void;
   toggleDeceased: (individualId: string) => void;
 
+  settings: AppSettings;
+  updateSettings: (updates: Partial<AppSettings>) => void;
+  updateLayoutSettings: (updates: Partial<LayoutSettings>) => void;
+
   saveHistory: () => void;
   undo: () => void;
   clear: () => void;
@@ -63,6 +69,16 @@ const DEFAULT_DISEASE: Disease = {
   id: "1",
   name: "Disease 1",
   color: "#000000",
+};
+
+const DEFAULT_SETTINGS: AppSettings = {
+  exportFilename: "pedigree",
+  layout: {
+    partnerGap: 70,
+    siblingSpacing: 90,
+    familySeparation: 100,
+    generationSpacing: 160,
+  },
 };
 
 export const usePedigreeStore = create<PedigreeStore>()(
@@ -80,6 +96,7 @@ export const usePedigreeStore = create<PedigreeStore>()(
     draggedIndividual: null,
     scale: 1,
     history: [],
+    settings: DEFAULT_SETTINGS,
 
     // Individual actions
     addIndividual: (individual) =>
@@ -93,7 +110,9 @@ export const usePedigreeStore = create<PedigreeStore>()(
         state.partnerships = state.partnerships.filter(
           (p) => p.individual1Id !== id && p.individual2Id !== id,
         );
-        state.connections = state.connections.filter((c) => c.childId !== id);
+        state.connections = state.connections.filter(
+          (c) => c.childId !== id && c.parentId !== id,
+        );
       }),
 
     updateIndividual: (id, updates) =>
@@ -217,6 +236,17 @@ export const usePedigreeStore = create<PedigreeStore>()(
         }
       }),
 
+    // Settings
+    updateSettings: (updates) =>
+      set((state) => {
+        Object.assign(state.settings, updates);
+      }),
+
+    updateLayoutSettings: (updates) =>
+      set((state) => {
+        Object.assign(state.settings.layout, updates);
+      }),
+
     // History
     saveHistory: () =>
       set((state) => {
@@ -309,16 +339,23 @@ export const usePedigreeStore = create<PedigreeStore>()(
               assignGeneration(child, generation + 1);
             });
           });
+
+          // Find direct (single-parent) children
+          const directChildren = state.connections
+            .filter((conn) => conn.parentId === individual.id)
+            .map((conn) => state.individuals.find((i) => i.id === conn.childId))
+            .filter(Boolean) as Individual[];
+
+          directChildren.forEach((child) => {
+            assignGeneration(child, generation + 1);
+          });
         };
 
         // Start from roots at generation 0
         roots.forEach((root) => assignGeneration(root, 0));
 
         // Layout parameters
-        const partnerGap = 70;
-        const siblingSpacing = 90;
-        const familySeparation = 100;
-        const generationSpacing = 160;
+        const { partnerGap, siblingSpacing, familySeparation, generationSpacing } = state.settings.layout;
         const startY = 150;
         const canvasWidth = 1200;
 
@@ -330,16 +367,25 @@ export const usePedigreeStore = create<PedigreeStore>()(
         const xOf = new Map<string, number>();
         const yOf = new Map<string, number>();
 
-        // Returns siblings of `id` that are in `indsInGen` (same parent partnership)
+        // Returns siblings of `id` that are in `indsInGen` (same parent partnership or same single parent)
         const getSiblings = (id: string, indsInGen: Individual[]) => {
           const conn = state.connections.find((c) => c.childId === id);
           if (!conn) return [];
-          return state.connections
-            .filter(
-              (c) => c.partnershipId === conn.partnershipId && c.childId !== id,
-            )
-            .map((c) => indsInGen.find((i) => i.id === c.childId))
-            .filter(Boolean) as Individual[];
+          if (conn.partnershipId) {
+            return state.connections
+              .filter(
+                (c) => c.partnershipId === conn.partnershipId && c.childId !== id,
+              )
+              .map((c) => indsInGen.find((i) => i.id === c.childId))
+              .filter(Boolean) as Individual[];
+          }
+          if (conn.parentId) {
+            return state.connections
+              .filter((c) => c.parentId === conn.parentId && c.childId !== id)
+              .map((c) => indsInGen.find((i) => i.id === c.childId))
+              .filter(Boolean) as Individual[];
+          }
+          return [];
         };
 
         // ── Bottom-up layout ──────────────────────────────────────────────
@@ -356,6 +402,23 @@ export const usePedigreeStore = create<PedigreeStore>()(
             state.partnerships.forEach((p) => {
               const sibs = state.connections
                 .filter((c) => c.partnershipId === p.id)
+                .map((c) => indsInGen.find((i) => i.id === c.childId))
+                .filter(Boolean) as Individual[];
+              if (sibs.length > 0) {
+                groups.push(sibs);
+                sibs.forEach((s) => inGroup.add(s.id));
+              }
+            });
+            const singleParentIds = [
+              ...new Set(
+                state.connections
+                  .filter((c) => c.parentId)
+                  .map((c) => c.parentId!),
+              ),
+            ];
+            singleParentIds.forEach((parentId) => {
+              const sibs = state.connections
+                .filter((c) => c.parentId === parentId)
                 .map((c) => indsInGen.find((i) => i.id === c.childId))
                 .filter(Boolean) as Individual[];
               if (sibs.length > 0) {
