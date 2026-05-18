@@ -11,12 +11,16 @@ export interface Individual {
   ageOfDeath?: number;
   causeOfDeath?: string;
   conditionAgeOfDiagnosis: Record<string, number>;
+  proband?: boolean;
 }
+
+export type PartnershipType = "regular" | "consanguineous" | "non-consanguineous";
 
 export interface Partnership {
   id: string;
   individual1Id: string;
   individual2Id: string;
+  type: PartnershipType;
 }
 
 export interface Connection {

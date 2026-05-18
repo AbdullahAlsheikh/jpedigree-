@@ -143,6 +143,18 @@ const IndividualEditPanel: React.FC = () => {
         />
       )}
 
+      <FormControlLabel
+        control={
+          <Switch
+            size="small"
+            checked={!!individual.proband}
+            onChange={() => update({ proband: !individual.proband })}
+          />
+        }
+        label={<Typography variant="body2">Index</Typography>}
+        sx={{ mb: 1 }}
+      />
+
       <Divider sx={{ my: 1.5 }} />
 
       <Typography
@@ -187,7 +199,9 @@ const IndividualEditPanel: React.FC = () => {
                 fullWidth
                 inputProps={{ min: 0 }}
                 value={individual.conditionAgeOfDiagnosis[condition.id] ?? ""}
-                onChange={(e) => handleDiagnosisAge(condition.id, e.target.value)}
+                onChange={(e) =>
+                  handleDiagnosisAge(condition.id, e.target.value)
+                }
                 sx={{ mt: 0.5, pl: 4 }}
               />
             )}

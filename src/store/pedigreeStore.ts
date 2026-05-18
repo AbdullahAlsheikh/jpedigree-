@@ -3,6 +3,7 @@ import { immer } from "zustand/middleware/immer";
 import {
   Individual,
   Partnership,
+  PartnershipType,
   Connection,
   Condition,
   Mode,
@@ -18,6 +19,7 @@ interface PedigreeStore {
   conditions: Condition[];
   currentMode: Mode;
   childGender: "male" | "female" | "unknown";
+  partnershipType: PartnershipType;
   currentConditionId: string | null;
   selectedIndividuals: Individual[];
   selectedPartnership: string | null;
@@ -37,6 +39,7 @@ interface PedigreeStore {
 
   addPartnership: (partnership: Partnership) => void;
   removePartnership: (id: string) => void;
+  updatePartnership: (id: string, updates: Partial<Partnership>) => void;
 
   addConnection: (connection: Connection) => void;
   removeConnection: (id: string) => void;
@@ -47,6 +50,7 @@ interface PedigreeStore {
 
   setMode: (mode: Mode) => void;
   setChildGender: (gender: "male" | "female" | "unknown") => void;
+  setPartnershipType: (type: PartnershipType) => void;
   setCurrentConditionId: (id: string | null) => void;
   setSelectedIndividuals: (individuals: Individual[]) => void;
   setSelectedPartnership: (partnershipId: string | null) => void;
@@ -92,6 +96,7 @@ export const usePedigreeStore = create<PedigreeStore>()(
     conditions: [DEFAULT_CONDITION],
     currentMode: "male",
     childGender: "female",
+    partnershipType: "regular",
     currentConditionId: "1",
     selectedIndividuals: [],
     selectedPartnership: null,
@@ -141,6 +146,14 @@ export const usePedigreeStore = create<PedigreeStore>()(
         );
       }),
 
+    updatePartnership: (id, updates) =>
+      set((state) => {
+        const partnership = state.partnerships.find((p) => p.id === id);
+        if (partnership) {
+          Object.assign(partnership, updates);
+        }
+      }),
+
     // Connection actions
     addConnection: (connection) =>
       set((state) => {
@@ -183,6 +196,11 @@ export const usePedigreeStore = create<PedigreeStore>()(
     setChildGender: (gender) =>
       set((state) => {
         state.childGender = gender;
+      }),
+
+    setPartnershipType: (type) =>
+      set((state) => {
+        state.partnershipType = type;
       }),
 
     setCurrentConditionId: (id) =>

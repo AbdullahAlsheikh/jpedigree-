@@ -11,7 +11,7 @@ import {
 import { Man, Woman } from "@mui/icons-material";
 import { usePedigreeStore } from "../../store/pedigreeStore";
 import { COLORS } from "../../theme/colors";
-import { Individual, Partnership } from "../../types/pedigree.types";
+import { Individual, Partnership, PartnershipType } from "../../types/pedigree.types";
 import IndividualSymbol from "./IndividualSymbol";
 import PartnershipLine from "./PartnershipLine";
 import ConnectionLine from "./ConnectionLine";
@@ -60,6 +60,7 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
     connections,
     currentMode,
     childGender,
+    partnershipType,
     currentConditionId,
     selectedIndividuals,
     selectedPartnership,
@@ -70,6 +71,7 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
     updateIndividual,
     addPartnership,
     removePartnership,
+    updatePartnership,
     addConnection,
     setSelectedIndividuals,
     setSelectedPartnership,
@@ -182,6 +184,7 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
       id: String(t + 1),
       individual1Id: source.id,
       individual2Id: partner.id,
+      type: partnershipType,
     });
     handleCloseMenu();
   };
@@ -214,6 +217,7 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
       id: String(t + 2),
       individual1Id: father.id,
       individual2Id: mother.id,
+      type: "regular",
     });
     addConnection({
       id: String(t + 3),
@@ -322,12 +326,23 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
       if (individual) {
         const newSelected = [...selectedIndividuals, individual];
         if (newSelected.length === 2) {
+          const [a, b] = newSelected;
+          const existing = partnerships.find(
+            (p) =>
+              (p.individual1Id === a.id && p.individual2Id === b.id) ||
+              (p.individual1Id === b.id && p.individual2Id === a.id),
+          );
           saveHistory();
-          addPartnership({
-            id: Date.now().toString(),
-            individual1Id: newSelected[0].id,
-            individual2Id: newSelected[1].id,
-          });
+          if (existing) {
+            updatePartnership(existing.id, { type: partnershipType });
+          } else {
+            addPartnership({
+              id: Date.now().toString(),
+              individual1Id: a.id,
+              individual2Id: b.id,
+              type: partnershipType,
+            });
+          }
           setSelectedIndividuals([]);
         } else {
           setSelectedIndividuals(newSelected);
@@ -534,6 +549,69 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
             : undefined
         }
       >
+        <ListSubheader sx={{ lineHeight: "32px", fontSize: 11 }}>
+          Relationship Type
+        </ListSubheader>
+        {(
+          [
+            {
+              value: "regular" as PartnershipType,
+              label: "Regular",
+              icon: (
+                <svg width="32" height="16" viewBox="0 0 32 16">
+                  <line x1="2" y1="8" x2="30" y2="8" stroke="currentColor" strokeWidth="2" />
+                </svg>
+              ),
+            },
+            {
+              value: "consanguineous" as PartnershipType,
+              label: "Consanguineous",
+              icon: (
+                <svg width="32" height="16" viewBox="0 0 32 16">
+                  <line x1="2" y1="5" x2="30" y2="5" stroke="currentColor" strokeWidth="2" />
+                  <line x1="2" y1="11" x2="30" y2="11" stroke="currentColor" strokeWidth="2" />
+                </svg>
+              ),
+            },
+            {
+              value: "non-consanguineous" as PartnershipType,
+              label: "Non-consanguineous",
+              icon: (
+                <svg width="32" height="16" viewBox="0 0 32 16">
+                  <line x1="2" y1="12" x2="30" y2="12" stroke="currentColor" strokeWidth="2" />
+                  <circle cx="16" cy="5" r="4" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                  <line x1="11" y1="11" x2="21" y2="-1" stroke="currentColor" strokeWidth="1.5" />
+                </svg>
+              ),
+            },
+          ] as const
+        ).map((opt) => {
+          const current = partnerships.find(
+            (p) => p.id === partnershipContextMenu?.partnershipId,
+          );
+          return (
+            <MenuItem
+              key={opt.value}
+              dense
+              selected={current?.type === opt.value}
+              onClick={() => {
+                if (partnershipContextMenu) {
+                  saveHistory();
+                  updatePartnership(partnershipContextMenu.partnershipId, {
+                    type: opt.value,
+                  });
+                  handleClosePartnershipMenu();
+                }
+              }}
+            >
+              <ListItemIcon sx={{ color: "text.primary" }}>{opt.icon}</ListItemIcon>
+              <ListItemText>{opt.label}</ListItemText>
+            </MenuItem>
+          );
+        })}
+
+        <Divider />
+
         <ListSubheader sx={{ lineHeight: "32px", fontSize: 11 }}>
           Add Child to Relationship
         </ListSubheader>

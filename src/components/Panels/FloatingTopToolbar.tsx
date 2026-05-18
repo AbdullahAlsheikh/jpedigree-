@@ -14,11 +14,14 @@ import {
   TextField,
   Typography,
   Stack,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
 import {
   Man,
   Woman,
-  Favorite,
   FaceRetouchingOff,
   ChildCare,
   LocalHospital,
@@ -31,21 +34,105 @@ import {
   Male,
   Female,
   Settings,
+  ArrowDropDown,
 } from "@mui/icons-material";
 import { usePedigreeStore } from "../../store/pedigreeStore";
-import { Mode } from "../../types/pedigree.types";
+import { Mode, PartnershipType } from "../../types/pedigree.types";
 import { PANEL_STYLE } from "../../theme/colors";
+
+const PARTNERSHIP_TYPE_OPTIONS: {
+  value: PartnershipType;
+  label: string;
+  icon: React.ReactNode;
+}[] = [
+  {
+    value: "regular",
+    label: "Regular",
+    icon: (
+      <svg width="32" height="16" viewBox="0 0 32 16">
+        <line
+          x1="2"
+          y1="8"
+          x2="30"
+          y2="8"
+          stroke="currentColor"
+          strokeWidth="2"
+        />
+      </svg>
+    ),
+  },
+  {
+    value: "consanguineous",
+    label: "Consanguineous",
+    icon: (
+      <svg width="32" height="16" viewBox="0 0 32 16">
+        <line
+          x1="2"
+          y1="5"
+          x2="30"
+          y2="5"
+          stroke="currentColor"
+          strokeWidth="2"
+        />
+        <line
+          x1="2"
+          y1="11"
+          x2="30"
+          y2="11"
+          stroke="currentColor"
+          strokeWidth="2"
+        />
+      </svg>
+    ),
+  },
+  {
+    value: "non-consanguineous",
+    label: "Non-consanguineous",
+    icon: (
+      <svg width="32" height="16" viewBox="0 0 32 16">
+        <line
+          x1="2"
+          y1="12"
+          x2="30"
+          y2="12"
+          stroke="currentColor"
+          strokeWidth="2"
+        />
+        <circle
+          cx="16"
+          cy="5"
+          r="4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        />
+        <line
+          x1="11"
+          y1="11"
+          x2="21"
+          y2="-1"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        />
+      </svg>
+    ),
+  },
+];
 
 const Toolbar: React.FC = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [partnershipMenuAnchor, setPartnershipMenuAnchor] =
+    useState<null | HTMLElement>(null);
 
   const {
     currentMode,
     childGender,
+    partnershipType,
     scale,
     settings,
     setMode,
     setChildGender,
+    setPartnershipType,
     setScale,
     updateSettings,
     updateLayoutSettings,
@@ -291,8 +378,20 @@ const Toolbar: React.FC = () => {
             </Box>
           </ToggleButton>
 
-          <ToggleButton value="partnership">
-            <Favorite />
+          <ToggleButton
+            value="partnership"
+            onClick={(e) => {
+              if (currentMode === "partnership") {
+                setPartnershipMenuAnchor(e.currentTarget);
+              }
+            }}
+            sx={{ gap: 0.25, pr: 0.5 }}
+          >
+            {
+              PARTNERSHIP_TYPE_OPTIONS.find((o) => o.value === partnershipType)
+                ?.icon
+            }
+            <ArrowDropDown sx={{ fontSize: 14, ml: -0.5 }} />
           </ToggleButton>
 
           <ToggleButton value="condition">
@@ -307,6 +406,36 @@ const Toolbar: React.FC = () => {
             <Delete />
           </ToggleButton>
         </ToggleButtonGroup>
+
+        {/* Partnership type dropdown menu */}
+        <Menu
+          anchorEl={partnershipMenuAnchor}
+          open={Boolean(partnershipMenuAnchor)}
+          onClose={() => setPartnershipMenuAnchor(null)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+          transformOrigin={{ vertical: "top", horizontal: "left" }}
+          slotProps={{ paper: { sx: { mt: 0.5 } } }}
+        >
+          {PARTNERSHIP_TYPE_OPTIONS.map((opt) => (
+            <MenuItem
+              key={opt.value}
+              selected={partnershipType === opt.value}
+              onClick={() => {
+                setPartnershipType(opt.value);
+                setPartnershipMenuAnchor(null);
+              }}
+              sx={{ gap: 1 }}
+            >
+              <ListItemIcon sx={{ minWidth: 40, color: "text.primary" }}>
+                {opt.icon}
+              </ListItemIcon>
+              <ListItemText
+                primary={opt.label}
+                primaryTypographyProps={{ fontSize: 13 }}
+              />
+            </MenuItem>
+          ))}
+        </Menu>
 
         <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
 

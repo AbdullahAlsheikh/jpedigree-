@@ -1,4 +1,5 @@
 import React from "react";
+import { TransitEnterexit } from "@mui/icons-material";
 import { Individual } from "../../types/pedigree.types";
 import { usePedigreeStore } from "../../store/pedigreeStore";
 import { COLORS } from "../../theme/colors";
@@ -208,7 +209,11 @@ const IndividualSymbol: React.FC<IndividualSymbolProps> = ({
           />
         ) : individual.sex === "unknown" ? (
           <polygon
-            points={diamondPoints(individual.x, individual.y, SYMBOL_SIZE / 2 + 4)}
+            points={diamondPoints(
+              individual.x,
+              individual.y,
+              SYMBOL_SIZE / 2 + 4,
+            )}
             fill="none"
             stroke={COLORS.selectionStroke}
             strokeWidth={3}
@@ -259,6 +264,21 @@ const IndividualSymbol: React.FC<IndividualSymbolProps> = ({
             strokeWidth={2}
           />
         ))}
+
+      {/* Proband arrow */}
+      {individual.proband && (() => {
+        const cx = individual.x - SYMBOL_SIZE / 2 - 22 + 12;
+        const cy = individual.y + SYMBOL_SIZE / 2 - 2 + 12;
+        return (
+          <TransitEnterexit
+            x={individual.x - SYMBOL_SIZE / 2 - 22}
+            y={individual.y + SYMBOL_SIZE / 2 - 2}
+            width={24}
+            height={24}
+            sx={{ color: COLORS.lineStroke, transform: `rotate(180deg)`, transformOrigin: `${cx}px ${cy}px` }}
+          />
+        );
+      })()}
     </g>
   );
 };
