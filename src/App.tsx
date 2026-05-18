@@ -4,7 +4,8 @@ import Toolbar from "./components/Panels/Toolbar";
 import FloatingBottomToolbar from "./components/Panels/FloatingBottomToolbar";
 import FloatingTopToolbar from "./components/Panels/FloatingTopToolbar";
 import PedigreeCanvas from "./components/Canvas/PedigreeCanvas";
-import DiseasePanel from "./components/Panels/DiseasePanel";
+import ConditionPanel from "./components/Panels/ConditionPanel";
+import IndividualEditPanel from "./components/Panels/IndividualEditPanel";
 import LegendPanel from "./components/Panels/LegendPanel";
 import { palette, COLORS } from "./theme/colors";
 
@@ -80,7 +81,23 @@ const App: React.FC = () => {
         >
           <PedigreeCanvas />
           <LegendPanel />
-          <DiseasePanel />
+          <Box
+            sx={{
+              position: "fixed",
+              top: 80,
+              left: 16,
+              width: 280,
+              zIndex: 1500,
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              maxHeight: "calc(100vh - 96px)",
+              overflowY: "auto",
+            }}
+          >
+            <ConditionPanel />
+            <IndividualEditPanel />
+          </Box>
         </Box>
 
         {/* <FloatingBottomToolbar /> */}
@@ -96,8 +113,8 @@ const App: React.FC = () => {
           }}
         >
           <strong>Instructions:</strong> Select a mode above, then click on the
-          canvas to add individuals. Use "Disease" mode to mark individuals with
-          diseases. Use "Drag" mode to move individuals. Use "Delete" mode to
+          canvas to add individuals. Use "Condition" mode to mark individuals with
+          conditions. Use "Drag" mode to move individuals. Use "Delete" mode to
           remove individuals/partnerships. Right-click any individual to edit
           label/name. Click "Auto-Layout" to organize pedigree automatically.
           For partnerships, click two individuals. For children, select gender

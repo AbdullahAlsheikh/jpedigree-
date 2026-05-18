@@ -151,6 +151,53 @@ const LegendPanel: React.FC = () => {
             <Typography variant="caption">Deceased Female</Typography>
           </Box>
 
+          {/* Unaffected Unknown */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <svg width="30" height="30" viewBox="0 0 40 40">
+              <polygon
+                points="20,8 32,20 20,32 8,20"
+                fill="white"
+                stroke={COLORS.lineStroke}
+                strokeWidth="2"
+              />
+            </svg>
+            <Typography variant="caption">Unaffected Unknown</Typography>
+          </Box>
+
+          {/* Affected Unknown */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <svg width="30" height="30" viewBox="0 0 40 40">
+              <polygon
+                points="20,8 32,20 20,32 8,20"
+                fill={COLORS.lineStroke}
+                stroke={COLORS.lineStroke}
+                strokeWidth="2"
+              />
+            </svg>
+            <Typography variant="caption">Affected Unknown</Typography>
+          </Box>
+
+          {/* Deceased Unknown */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <svg width="30" height="30" viewBox="0 0 40 40">
+              <polygon
+                points="20,8 32,20 20,32 8,20"
+                fill="white"
+                stroke={COLORS.lineStroke}
+                strokeWidth="2"
+              />
+              <line
+                x1="8"
+                y1="32"
+                x2="32"
+                y2="8"
+                stroke={COLORS.lineStroke}
+                strokeWidth="2"
+              />
+            </svg>
+            <Typography variant="caption">Deceased Unknown</Typography>
+          </Box>
+
           {/* Partnership */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <svg width="30" height="30" viewBox="0 0 40 40">

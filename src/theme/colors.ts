@@ -29,8 +29,8 @@ export const PANEL_STYLE = {
   elevation:       1,
 } as const;
 
-// Ordered disease color palette — cycles when more diseases are added.
-export const DISEASE_COLORS: readonly string[] = [
+// Ordered condition color palette — cycles when more conditions are added.
+export const CONDITION_COLORS: readonly string[] = [
   "#DC2626", // red
   "#2563EB", // primary blue
   "#059669", // secondary green

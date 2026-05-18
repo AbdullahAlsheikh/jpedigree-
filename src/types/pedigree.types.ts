@@ -2,11 +2,15 @@ export interface Individual {
   id: string;
   x: number;
   y: number;
-  sex: "male" | "female";
+  sex: "male" | "female" | "unknown";
   label: string;
-  diseases: string[];
+  conditions: string[];
   affected: boolean;
   deceased: boolean;
+  age?: number;
+  ageOfDeath?: number;
+  causeOfDeath?: string;
+  conditionAgeOfDiagnosis: Record<string, number>;
 }
 
 export interface Partnership {
@@ -22,7 +26,7 @@ export interface Connection {
   childId: string;
 }
 
-export interface Disease {
+export interface Condition {
   id: string;
   name: string;
   color: string;
@@ -44,17 +48,18 @@ export interface PedigreeState {
   individuals: Individual[];
   partnerships: Partnership[];
   connections: Connection[];
-  diseases: Disease[];
+  conditions: Condition[];
 }
 
 export type Mode =
   | "male"
   | "female"
+  | "unknown"
   | "partnership"
   | "child"
   | "drag"
   | "delete"
-  | "disease"
+  | "condition"
   | "deceased";
 
 export interface CanvasState {

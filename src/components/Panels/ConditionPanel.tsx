@@ -12,60 +12,54 @@ import {
 } from "@mui/material";
 import { Delete, Add, Circle } from "@mui/icons-material";
 import { usePedigreeStore } from "../../store/pedigreeStore";
-import { COLORS, PANEL_STYLE, DISEASE_COLORS } from "../../theme/colors";
+import { COLORS, PANEL_STYLE, CONDITION_COLORS } from "../../theme/colors";
 
-const DiseasePanel: React.FC = () => {
+const ConditionPanel: React.FC = () => {
   const {
-    diseases,
-    addDisease,
-    removeDisease,
-    updateDisease,
-    setCurrentDiseaseId,
-    currentDiseaseId,
+    conditions,
+    addCondition,
+    removeCondition,
+    updateCondition,
+    setCurrentConditionId,
+    currentConditionId,
     setMode,
   } = usePedigreeStore();
 
-  const handleAddDisease = () => {
-    const color = DISEASE_COLORS[diseases.length % DISEASE_COLORS.length];
+  const handleAddCondition = () => {
+    const color = CONDITION_COLORS[conditions.length % CONDITION_COLORS.length];
 
-    addDisease({
+    addCondition({
       id: Date.now().toString(),
-      name: `Disease ${diseases.length + 1}`,
+      name: `Condition ${conditions.length + 1}`,
       color,
     });
   };
 
-  const handleRemoveDisease = (id: string) => {
-    if (diseases.length > 1) {
-      removeDisease(id);
+  const handleRemoveCondition = (id: string) => {
+    if (conditions.length > 1) {
+      removeCondition(id);
     }
   };
 
-  const handleSelectDisease = (id: string) => {
-    setCurrentDiseaseId(id);
-    setMode("disease");
+  const handleSelectCondition = (id: string) => {
+    setCurrentConditionId(id);
+    setMode("condition");
   };
 
   const handleNameChange = (id: string, name: string) => {
-    updateDisease(id, { name });
+    updateCondition(id, { name });
   };
 
   const handleColorChange = (id: string, color: string) => {
-    updateDisease(id, { color });
+    updateCondition(id, { color });
   };
 
   return (
     <Paper
       elevation={1}
       sx={{
-        position: "fixed",
-        top: 80,
-        left: 16,
-        width: 280,
-        maxHeight: "calc(100vh - 120px)",
         overflow: "auto",
         p: 2,
-        zIndex: 1300,
         borderRadius: PANEL_STYLE.borderRadius,
         backdropFilter: PANEL_STYLE.backdropFilter,
         backgroundColor: PANEL_STYLE.backgroundColor,
@@ -80,18 +74,18 @@ const DiseasePanel: React.FC = () => {
         }}
       >
         <Typography variant="h6" sx={{ fontSize: 14 }}>
-          Disease Tracking
+          Condition Tracking
         </Typography>
 
-        <IconButton size="small" onClick={handleAddDisease} sx={{ mt: 1 }}>
+        <IconButton size="small" onClick={handleAddCondition} sx={{ mt: 1 }}>
           <Add />
         </IconButton>
       </Box>
 
       <List dense>
-        {diseases.map((disease) => (
+        {conditions.map((condition) => (
           <ListItem
-            key={disease.id}
+            key={condition.id}
             sx={{
               display: "flex",
               gap: 1,
@@ -102,17 +96,17 @@ const DiseasePanel: React.FC = () => {
           >
             <IconButton
               size="small"
-              onClick={() => handleSelectDisease(disease.id)}
+              onClick={() => handleSelectCondition(condition.id)}
               sx={{
-                bgcolor: disease.color,
+                bgcolor: condition.color,
                 width: 32,
                 height: 32,
                 border:
-                  currentDiseaseId === disease.id
+                  currentConditionId === condition.id
                     ? `3px solid ${COLORS.selectionStroke}`
                     : `1px solid ${COLORS.lineStroke}`,
                 "&:hover": {
-                  bgcolor: disease.color,
+                  bgcolor: condition.color,
                   opacity: 0.8,
                 },
               }}
@@ -122,15 +116,15 @@ const DiseasePanel: React.FC = () => {
 
             <TextField
               size="small"
-              value={disease.name}
-              onChange={(e) => handleNameChange(disease.id, e.target.value)}
+              value={condition.name}
+              onChange={(e) => handleNameChange(condition.id, e.target.value)}
               sx={{ flex: 1 }}
             />
 
             <input
               type="color"
-              value={disease.color}
-              onChange={(e) => handleColorChange(disease.id, e.target.value)}
+              value={condition.color}
+              onChange={(e) => handleColorChange(condition.id, e.target.value)}
               style={{
                 width: 32,
                 height: 32,
@@ -140,11 +134,11 @@ const DiseasePanel: React.FC = () => {
               }}
             />
 
-            {diseases.length > 1 && (
+            {conditions.length > 1 && (
               <IconButton
                 size="small"
                 color="error"
-                onClick={() => handleRemoveDisease(disease.id)}
+                onClick={() => handleRemoveCondition(condition.id)}
               >
                 <Delete fontSize="small" />
               </IconButton>
@@ -157,20 +151,20 @@ const DiseasePanel: React.FC = () => {
         fullWidth
         variant="contained"
         startIcon={<Add />}
-        onClick={handleAddDisease}
+        onClick={handleAddCondition}
         sx={{ mt: 1 }}
       >
-        Add Disease
+        Add Condition
       </Button> */}
 
-      {currentDiseaseId && (
+      {currentConditionId && (
         <Box sx={{ mt: 2 }}>
           <Chip
-            label={`Marking: ${diseases.find((d) => d.id === currentDiseaseId)?.name}`}
+            label={`Marking: ${conditions.find((d) => d.id === currentConditionId)?.name}`}
             color="primary"
             size="small"
             sx={{
-              bgcolor: diseases.find((d) => d.id === currentDiseaseId)?.color,
+              bgcolor: conditions.find((d) => d.id === currentConditionId)?.color,
             }}
           />
         </Box>
@@ -179,4 +173,4 @@ const DiseasePanel: React.FC = () => {
   );
 };
 
-export default DiseasePanel;
+export default ConditionPanel;

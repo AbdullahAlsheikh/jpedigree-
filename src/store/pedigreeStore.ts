@@ -4,7 +4,7 @@ import {
   Individual,
   Partnership,
   Connection,
-  Disease,
+  Condition,
   Mode,
   AppSettings,
   LayoutSettings,
@@ -15,13 +15,14 @@ interface PedigreeStore {
   individuals: Individual[];
   partnerships: Partnership[];
   connections: Connection[];
-  diseases: Disease[];
+  conditions: Condition[];
   currentMode: Mode;
-  childGender: "male" | "female";
-  currentDiseaseId: string | null;
+  childGender: "male" | "female" | "unknown";
+  currentConditionId: string | null;
   selectedIndividuals: Individual[];
   selectedPartnership: string | null;
   draggedIndividual: Individual | null;
+  editingIndividualId: string | null;
   scale: number;
   history: Array<{
     individuals: Individual[];
@@ -40,19 +41,20 @@ interface PedigreeStore {
   addConnection: (connection: Connection) => void;
   removeConnection: (id: string) => void;
 
-  addDisease: (disease: Disease) => void;
-  removeDisease: (id: string) => void;
-  updateDisease: (id: string, updates: Partial<Disease>) => void;
+  addCondition: (condition: Condition) => void;
+  removeCondition: (id: string) => void;
+  updateCondition: (id: string, updates: Partial<Condition>) => void;
 
   setMode: (mode: Mode) => void;
-  setChildGender: (gender: "male" | "female") => void;
-  setCurrentDiseaseId: (id: string | null) => void;
+  setChildGender: (gender: "male" | "female" | "unknown") => void;
+  setCurrentConditionId: (id: string | null) => void;
   setSelectedIndividuals: (individuals: Individual[]) => void;
   setSelectedPartnership: (partnershipId: string | null) => void;
   setDraggedIndividual: (individual: Individual | null) => void;
+  setEditingIndividualId: (id: string | null) => void;
   setScale: (scale: number) => void;
 
-  toggleDiseaseForIndividual: (individualId: string, diseaseId: string) => void;
+  toggleConditionForIndividual: (individualId: string, conditionId: string) => void;
   toggleDeceased: (individualId: string) => void;
 
   settings: AppSettings;
@@ -65,9 +67,9 @@ interface PedigreeStore {
   autoLayout: () => void;
 }
 
-const DEFAULT_DISEASE: Disease = {
+const DEFAULT_CONDITION: Condition = {
   id: "1",
-  name: "Disease 1",
+  name: "Condition 1",
   color: "#000000",
 };
 
@@ -87,13 +89,14 @@ export const usePedigreeStore = create<PedigreeStore>()(
     individuals: [],
     partnerships: [],
     connections: [],
-    diseases: [DEFAULT_DISEASE],
+    conditions: [DEFAULT_CONDITION],
     currentMode: "male",
     childGender: "female",
-    currentDiseaseId: "1",
+    currentConditionId: "1",
     selectedIndividuals: [],
     selectedPartnership: null,
     draggedIndividual: null,
+    editingIndividualId: null,
     scale: 1,
     history: [],
     settings: DEFAULT_SETTINGS,
@@ -106,6 +109,7 @@ export const usePedigreeStore = create<PedigreeStore>()(
 
     removeIndividual: (id) =>
       set((state) => {
+        if (state.editingIndividualId === id) state.editingIndividualId = null;
         state.individuals = state.individuals.filter((ind) => ind.id !== id);
         state.partnerships = state.partnerships.filter(
           (p) => p.individual1Id !== id && p.individual2Id !== id,
@@ -148,25 +152,25 @@ export const usePedigreeStore = create<PedigreeStore>()(
         state.connections = state.connections.filter((c) => c.id !== id);
       }),
 
-    // Disease actions
-    addDisease: (disease) =>
+    // Condition actions
+    addCondition: (condition) =>
       set((state) => {
-        state.diseases.push(disease);
+        state.conditions.push(condition);
       }),
 
-    removeDisease: (id) =>
+    removeCondition: (id) =>
       set((state) => {
-        state.diseases = state.diseases.filter((d) => d.id !== id);
+        state.conditions = state.conditions.filter((d) => d.id !== id);
         state.individuals.forEach((ind) => {
-          ind.diseases = ind.diseases.filter((diseaseId) => diseaseId !== id);
+          ind.conditions = ind.conditions.filter((conditionId) => conditionId !== id);
         });
       }),
 
-    updateDisease: (id, updates) =>
+    updateCondition: (id, updates) =>
       set((state) => {
-        const disease = state.diseases.find((d) => d.id === id);
-        if (disease) {
-          Object.assign(disease, updates);
+        const condition = state.conditions.find((d) => d.id === id);
+        if (condition) {
+          Object.assign(condition, updates);
         }
       }),
 
@@ -181,9 +185,9 @@ export const usePedigreeStore = create<PedigreeStore>()(
         state.childGender = gender;
       }),
 
-    setCurrentDiseaseId: (id) =>
+    setCurrentConditionId: (id) =>
       set((state) => {
-        state.currentDiseaseId = id;
+        state.currentConditionId = id;
       }),
 
     setSelectedIndividuals: (individuals) =>
@@ -201,27 +205,32 @@ export const usePedigreeStore = create<PedigreeStore>()(
         state.draggedIndividual = individual;
       }),
 
+    setEditingIndividualId: (id) =>
+      set((state) => {
+        state.editingIndividualId = id;
+      }),
+
     setScale: (scale) =>
       set((state) => {
         state.scale = scale;
       }),
 
-    // Toggle disease for individual
-    toggleDiseaseForIndividual: (individualId, diseaseId) =>
+    // Toggle condition for individual
+    toggleConditionForIndividual: (individualId, conditionId) =>
       set((state) => {
         const individual = state.individuals.find(
           (ind) => ind.id === individualId,
         );
         if (individual) {
-          const hasDisease = individual.diseases.includes(diseaseId);
-          if (hasDisease) {
-            individual.diseases = individual.diseases.filter(
-              (id) => id !== diseaseId,
+          const hasCondition = individual.conditions.includes(conditionId);
+          if (hasCondition) {
+            individual.conditions = individual.conditions.filter(
+              (id) => id !== conditionId,
             );
           } else {
-            individual.diseases.push(diseaseId);
+            individual.conditions.push(conditionId);
           }
-          individual.affected = individual.diseases.length > 0;
+          individual.affected = individual.conditions.length > 0;
         }
       }),
 
@@ -277,6 +286,7 @@ export const usePedigreeStore = create<PedigreeStore>()(
         state.connections = [];
         state.selectedIndividuals = [];
         state.selectedPartnership = null;
+        state.editingIndividualId = null;
       }),
 
     // Auto-layout algorithm

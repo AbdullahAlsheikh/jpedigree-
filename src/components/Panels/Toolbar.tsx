@@ -98,6 +98,12 @@ const Toolbar: React.FC = () => {
             Add Female
           </Button>
           <Button
+            onClick={() => handleModeChange("unknown")}
+            color={currentMode === "unknown" ? "primary" : "inherit"}
+          >
+            Add Unknown
+          </Button>
+          <Button
             startIcon={<Favorite />}
             onClick={() => handleModeChange("partnership")}
             color={currentMode === "partnership" ? "primary" : "inherit"}
@@ -128,6 +134,12 @@ const Toolbar: React.FC = () => {
             >
               Female
             </Button>
+            <Button
+              onClick={() => setChildGender("unknown")}
+              color={childGender === "unknown" ? "primary" : "inherit"}
+            >
+              Unknown
+            </Button>
           </ButtonGroup>
         )}
 
@@ -142,10 +154,10 @@ const Toolbar: React.FC = () => {
           </Button>
           <Button
             startIcon={<LocalHospital />}
-            onClick={() => handleModeChange("disease")}
-            color={currentMode === "disease" ? "success" : "inherit"}
+            onClick={() => handleModeChange("condition")}
+            color={currentMode === "condition" ? "success" : "inherit"}
           >
-            Disease
+            Condition
           </Button>
           <Button
             startIcon={<FaceRetouchingOff />}

@@ -10,31 +10,43 @@ interface IndividualSymbolProps {
 
 const SYMBOL_SIZE = 50;
 
+const diamondPoints = (cx: number, cy: number, r: number) =>
+  `${cx},${cy - r} ${cx + r},${cy} ${cx},${cy + r} ${cx - r},${cy}`;
+
 const IndividualSymbol: React.FC<IndividualSymbolProps> = ({
   individual,
   isSelected,
 }) => {
-  const { diseases } = usePedigreeStore();
+  const { conditions } = usePedigreeStore();
 
-  const getDiseaseColors = () => {
-    return individual.diseases
-      .map((diseaseId) => diseases.find((d) => d.id === diseaseId)?.color)
+  const getConditionColors = () => {
+    return individual.conditions
+      .map((conditionId) => conditions.find((d) => d.id === conditionId)?.color)
       .filter(Boolean) as string[];
   };
 
   const renderSymbol = () => {
-    const diseaseColors = getDiseaseColors();
+    const conditionColors = getConditionColors();
     const { x, y, sex } = individual;
+    const r = SYMBOL_SIZE / 2;
 
-    if (diseaseColors.length === 0) {
-      // No diseases - white fill
+    if (conditionColors.length === 0) {
       if (sex === "male") {
         return (
           <rect
-            x={x - SYMBOL_SIZE / 2}
-            y={y - SYMBOL_SIZE / 2}
+            x={x - r}
+            y={y - r}
             width={SYMBOL_SIZE}
             height={SYMBOL_SIZE}
+            fill="white"
+            stroke={COLORS.lineStroke}
+            strokeWidth={2}
+          />
+        );
+      } else if (sex === "unknown") {
+        return (
+          <polygon
+            points={diamondPoints(x, y, r)}
             fill="white"
             stroke={COLORS.lineStroke}
             strokeWidth={2}
@@ -45,23 +57,31 @@ const IndividualSymbol: React.FC<IndividualSymbolProps> = ({
           <circle
             cx={x}
             cy={y}
-            r={SYMBOL_SIZE / 2}
+            r={r}
             fill="white"
             stroke={COLORS.lineStroke}
             strokeWidth={2}
           />
         );
       }
-    } else if (diseaseColors.length === 1) {
-      // Single disease
+    } else if (conditionColors.length === 1) {
       if (sex === "male") {
         return (
           <rect
-            x={x - SYMBOL_SIZE / 2}
-            y={y - SYMBOL_SIZE / 2}
+            x={x - r}
+            y={y - r}
             width={SYMBOL_SIZE}
             height={SYMBOL_SIZE}
-            fill={diseaseColors[0]}
+            fill={conditionColors[0]}
+            stroke={COLORS.lineStroke}
+            strokeWidth={2}
+          />
+        );
+      } else if (sex === "unknown") {
+        return (
+          <polygon
+            points={diamondPoints(x, y, r)}
+            fill={conditionColors[0]}
             stroke={COLORS.lineStroke}
             strokeWidth={2}
           />
@@ -71,32 +91,32 @@ const IndividualSymbol: React.FC<IndividualSymbolProps> = ({
           <circle
             cx={x}
             cy={y}
-            r={SYMBOL_SIZE / 2}
-            fill={diseaseColors[0]}
+            r={r}
+            fill={conditionColors[0]}
             stroke={COLORS.lineStroke}
             strokeWidth={2}
           />
         );
       }
     } else {
-      // Multiple diseases
+      // Multiple conditions
       if (sex === "male") {
-        const segmentHeight = SYMBOL_SIZE / diseaseColors.length;
+        const segmentHeight = SYMBOL_SIZE / conditionColors.length;
         return (
           <g>
-            {diseaseColors.map((color, i) => (
+            {conditionColors.map((color, i) => (
               <rect
                 key={i}
-                x={x - SYMBOL_SIZE / 2}
-                y={y - SYMBOL_SIZE / 2 + i * segmentHeight}
+                x={x - r}
+                y={y - r + i * segmentHeight}
                 width={SYMBOL_SIZE}
                 height={segmentHeight}
                 fill={color}
               />
             ))}
             <rect
-              x={x - SYMBOL_SIZE / 2}
-              y={y - SYMBOL_SIZE / 2}
+              x={x - r}
+              y={y - r}
               width={SYMBOL_SIZE}
               height={SYMBOL_SIZE}
               fill="none"
@@ -105,24 +125,53 @@ const IndividualSymbol: React.FC<IndividualSymbolProps> = ({
             />
           </g>
         );
-      } else {
-        const anglePerDisease = 360 / diseaseColors.length;
+      } else if (sex === "unknown") {
+        const clipId = `diamond-clip-${individual.id}`;
+        const segmentHeight = SYMBOL_SIZE / conditionColors.length;
         return (
           <g>
-            {diseaseColors.map((color, i) => {
-              const startAngle = (i * anglePerDisease - 90) * (Math.PI / 180);
+            <defs>
+              <clipPath id={clipId}>
+                <polygon points={diamondPoints(x, y, r)} />
+              </clipPath>
+            </defs>
+            {conditionColors.map((color, i) => (
+              <rect
+                key={i}
+                x={x - r}
+                y={y - r + i * segmentHeight}
+                width={SYMBOL_SIZE}
+                height={segmentHeight}
+                fill={color}
+                clipPath={`url(#${clipId})`}
+              />
+            ))}
+            <polygon
+              points={diamondPoints(x, y, r)}
+              fill="none"
+              stroke={COLORS.lineStroke}
+              strokeWidth={2}
+            />
+          </g>
+        );
+      } else {
+        const anglePerCondition = 360 / conditionColors.length;
+        return (
+          <g>
+            {conditionColors.map((color, i) => {
+              const startAngle = (i * anglePerCondition - 90) * (Math.PI / 180);
               const endAngle =
-                ((i + 1) * anglePerDisease - 90) * (Math.PI / 180);
-              const x1 = x + (SYMBOL_SIZE / 2) * Math.cos(startAngle);
-              const y1 = y + (SYMBOL_SIZE / 2) * Math.sin(startAngle);
-              const x2 = x + (SYMBOL_SIZE / 2) * Math.cos(endAngle);
-              const y2 = y + (SYMBOL_SIZE / 2) * Math.sin(endAngle);
-              const largeArc = anglePerDisease > 180 ? 1 : 0;
+                ((i + 1) * anglePerCondition - 90) * (Math.PI / 180);
+              const x1 = x + r * Math.cos(startAngle);
+              const y1 = y + r * Math.sin(startAngle);
+              const x2 = x + r * Math.cos(endAngle);
+              const y2 = y + r * Math.sin(endAngle);
+              const largeArc = anglePerCondition > 180 ? 1 : 0;
 
               return (
                 <path
                   key={i}
-                  d={`M ${x} ${y} L ${x1} ${y1} A ${SYMBOL_SIZE / 2} ${SYMBOL_SIZE / 2} 0 ${largeArc} 1 ${x2} ${y2} Z`}
+                  d={`M ${x} ${y} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`}
                   fill={color}
                 />
               );
@@ -130,7 +179,7 @@ const IndividualSymbol: React.FC<IndividualSymbolProps> = ({
             <circle
               cx={x}
               cy={y}
-              r={SYMBOL_SIZE / 2}
+              r={r}
               fill="none"
               stroke={COLORS.lineStroke}
               strokeWidth={2}
@@ -153,6 +202,13 @@ const IndividualSymbol: React.FC<IndividualSymbolProps> = ({
             y={individual.y - SYMBOL_SIZE / 2 - 3}
             width={SYMBOL_SIZE + 6}
             height={SYMBOL_SIZE + 6}
+            fill="none"
+            stroke={COLORS.selectionStroke}
+            strokeWidth={3}
+          />
+        ) : individual.sex === "unknown" ? (
+          <polygon
+            points={diamondPoints(individual.x, individual.y, SYMBOL_SIZE / 2 + 4)}
             fill="none"
             stroke={COLORS.selectionStroke}
             strokeWidth={3}
@@ -182,23 +238,23 @@ const IndividualSymbol: React.FC<IndividualSymbolProps> = ({
         </text>
       )}
 
-      {/* Diseases */}
+      {/* Deceased */}
       {individual.deceased &&
-        (individual.sex === "female" ? (
-          <line
-            x1={individual.x - SYMBOL_SIZE / 2}
-            y1={individual.y + SYMBOL_SIZE / 2}
-            x2={individual.x + SYMBOL_SIZE / 2}
-            y2={individual.y - SYMBOL_SIZE / 2}
-            stroke={COLORS.lineStroke}
-            strokeWidth={2}
-          />
-        ) : (
+        (individual.sex === "male" ? (
           <line
             x1={individual.x - 10 - SYMBOL_SIZE / 2}
             y1={individual.y + 10 + SYMBOL_SIZE / 2}
             x2={individual.x + 10 + SYMBOL_SIZE / 2}
             y2={individual.y - 10 - SYMBOL_SIZE / 2}
+            stroke={COLORS.lineStroke}
+            strokeWidth={2}
+          />
+        ) : (
+          <line
+            x1={individual.x - SYMBOL_SIZE / 2}
+            y1={individual.y + SYMBOL_SIZE / 2}
+            x2={individual.x + SYMBOL_SIZE / 2}
+            y2={individual.y - SYMBOL_SIZE / 2}
             stroke={COLORS.lineStroke}
             strokeWidth={2}
           />

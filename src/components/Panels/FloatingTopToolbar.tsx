@@ -69,6 +69,9 @@ const Toolbar: React.FC = () => {
     } else if (newValue === "child-female") {
       setMode("child");
       setChildGender("female");
+    } else if (newValue === "child-unknown") {
+      setMode("child");
+      setChildGender("unknown");
     } else {
       setMode(newValue as Mode);
     }
@@ -216,6 +219,17 @@ const Toolbar: React.FC = () => {
             <Woman />
           </ToggleButton>
 
+          <ToggleButton value="unknown">
+            <svg width="24" height="24" viewBox="0 0 24 24">
+              <polygon
+                points="12,2 22,12 12,22 2,12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+            </svg>
+          </ToggleButton>
+
           <ToggleButton value="child-male">
             <Box sx={{ position: "relative", width: 24, height: 24 }}>
               <ChildCare />
@@ -248,11 +262,40 @@ const Toolbar: React.FC = () => {
             </Box>
           </ToggleButton>
 
+          <ToggleButton value="child-unknown">
+            <Box sx={{ position: "relative", width: 24, height: 24 }}>
+              <ChildCare />
+              <Box
+                sx={{
+                  position: "absolute",
+                  bottom: -2,
+                  right: -2,
+                  width: 12,
+                  height: 12,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: PANEL_STYLE.backgroundColor,
+                  borderRadius: "50%",
+                }}
+              >
+                <svg width="10" height="10" viewBox="0 0 10 10">
+                  <polygon
+                    points="5,1 9,5 5,9 1,5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                </svg>
+              </Box>
+            </Box>
+          </ToggleButton>
+
           <ToggleButton value="partnership">
             <Favorite />
           </ToggleButton>
 
-          <ToggleButton value="disease">
+          <ToggleButton value="condition">
             <LocalHospital />
           </ToggleButton>
 

@@ -1,5 +1,14 @@
 import React, { useRef, useState, useCallback } from "react";
-import { Box } from "@mui/material";
+import {
+  Box,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  ListSubheader,
+  Divider,
+} from "@mui/material";
+import { Man, Woman } from "@mui/icons-material";
 import { usePedigreeStore } from "../../store/pedigreeStore";
 import { COLORS } from "../../theme/colors";
 import { Individual, Partnership } from "../../types/pedigree.types";
@@ -14,6 +23,17 @@ interface PedigreeCanvasProps {
   height?: number;
 }
 
+const DiamondIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20">
+    <polygon
+      points="10,2 18,10 10,18 2,10"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
+  </svg>
+);
+
 const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
   width = 1200,
   height = 900,
@@ -23,6 +43,16 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
   const [viewBox, setViewBox] = useState({ x: 0, y: 0, width, height });
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    mouseX: number;
+    mouseY: number;
+    individualId: string;
+  } | null>(null);
+  const [partnershipContextMenu, setPartnershipContextMenu] = useState<{
+    mouseX: number;
+    mouseY: number;
+    partnershipId: string;
+  } | null>(null);
 
   const {
     individuals,
@@ -30,7 +60,7 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
     connections,
     currentMode,
     childGender,
-    currentDiseaseId,
+    currentConditionId,
     selectedIndividuals,
     selectedPartnership,
     draggedIndividual,
@@ -44,9 +74,10 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
     setSelectedIndividuals,
     setSelectedPartnership,
     setDraggedIndividual,
-    toggleDiseaseForIndividual,
+    toggleConditionForIndividual,
     toggleDeceased,
     saveHistory,
+    setEditingIndividualId,
   } = usePedigreeStore();
 
   const getMousePosition = useCallback(
@@ -93,6 +124,107 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
     [partnerships, individuals],
   );
 
+  // ── Context menu actions ────────────────────────────────────────────────
+
+  const makeIndividual = (
+    x: number,
+    y: number,
+    sex: "male" | "female" | "unknown",
+    id: string,
+  ): Individual => ({
+    id,
+    x,
+    y,
+    sex,
+    label: "",
+    conditions: [],
+    affected: false,
+    deceased: false,
+    conditionAgeOfDiagnosis: {},
+  });
+
+  const handleCloseMenu = () => setContextMenu(null);
+  const handleClosePartnershipMenu = () => setPartnershipContextMenu(null);
+
+  const handleAddChildToPartnership = (sex: "male" | "female" | "unknown") => {
+    const partnership = partnerships.find(
+      (p) => p.id === partnershipContextMenu?.partnershipId,
+    );
+    if (!partnership) return;
+    const p1 = individuals.find((i) => i.id === partnership.individual1Id);
+    const p2 = individuals.find((i) => i.id === partnership.individual2Id);
+    if (!p1 || !p2) return;
+    saveHistory();
+    const t = Date.now();
+    const child = makeIndividual(
+      (p1.x + p2.x) / 2,
+      Math.max(p1.y, p2.y) + 160,
+      sex,
+      String(t),
+    );
+    addIndividual(child);
+    addConnection({
+      id: String(t + 1),
+      partnershipId: partnership.id,
+      childId: child.id,
+    });
+    handleClosePartnershipMenu();
+  };
+
+  const handleAddPartner = (sex: "male" | "female" | "unknown") => {
+    const source = individuals.find((i) => i.id === contextMenu?.individualId);
+    if (!source) return;
+    saveHistory();
+    const t = Date.now();
+    const partner = makeIndividual(source.x + 100, source.y, sex, String(t));
+    addIndividual(partner);
+    addPartnership({
+      id: String(t + 1),
+      individual1Id: source.id,
+      individual2Id: partner.id,
+    });
+    handleCloseMenu();
+  };
+
+  const handleAddChild = (sex: "male" | "female" | "unknown") => {
+    const source = individuals.find((i) => i.id === contextMenu?.individualId);
+    if (!source) return;
+    saveHistory();
+    const t = Date.now();
+    const child = makeIndividual(source.x, source.y + 160, sex, String(t));
+    addIndividual(child);
+    addConnection({
+      id: String(t + 1),
+      parentId: source.id,
+      childId: child.id,
+    });
+    handleCloseMenu();
+  };
+
+  const handleAddParents = () => {
+    const source = individuals.find((i) => i.id === contextMenu?.individualId);
+    if (!source) return;
+    saveHistory();
+    const t = Date.now();
+    const father = makeIndividual(source.x - 50, source.y - 160, "male", String(t));
+    const mother = makeIndividual(source.x + 50, source.y - 160, "female", String(t + 1));
+    addIndividual(father);
+    addIndividual(mother);
+    addPartnership({
+      id: String(t + 2),
+      individual1Id: father.id,
+      individual2Id: mother.id,
+    });
+    addConnection({
+      id: String(t + 3),
+      partnershipId: String(t + 2),
+      childId: source.id,
+    });
+    handleCloseMenu();
+  };
+
+  // ── Mouse handlers ──────────────────────────────────────────────────────
+
   const handleMouseDown = (event: React.MouseEvent<SVGSVGElement>) => {
     const pos = getMousePosition(event);
     const individual = findIndividualAt(pos.x, pos.y);
@@ -122,9 +254,9 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
       return;
     }
 
-    if (currentMode === "disease" && individual && currentDiseaseId) {
+    if (currentMode === "condition" && individual && currentConditionId) {
       saveHistory();
-      toggleDiseaseForIndividual(individual.id, currentDiseaseId);
+      toggleConditionForIndividual(individual.id, currentConditionId);
       return;
     }
 
@@ -164,9 +296,14 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
 
   const handleClick = (event: React.MouseEvent<SVGSVGElement>) => {
     const pos = getMousePosition(event);
+    const clickedIndividualForPanel = findIndividualAt(pos.x, pos.y);
+    if (clickedIndividualForPanel && currentMode !== "delete") {
+      setEditingIndividualId(clickedIndividualForPanel.id);
+    } else if (!clickedIndividualForPanel) {
+      setEditingIndividualId(null);
+    }
 
-    if (currentMode === "male" || currentMode === "female") {
-      //add individual
+    if (currentMode === "male" || currentMode === "female" || currentMode === "unknown") {
       saveHistory();
       const newIndividual: Individual = {
         id: Date.now().toString(),
@@ -174,13 +311,13 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
         y: pos.y,
         sex: currentMode,
         label: "",
-        diseases: [],
+        conditions: [],
         affected: false,
         deceased: false,
+        conditionAgeOfDiagnosis: {},
       };
       addIndividual(newIndividual);
     } else if (currentMode === "partnership") {
-      //add partnership
       const individual = findIndividualAt(pos.x, pos.y);
       if (individual) {
         const newSelected = [...selectedIndividuals, individual];
@@ -216,9 +353,10 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
           y: pos.y,
           sex: childGender,
           label: "",
-          diseases: [],
+          conditions: [],
           affected: false,
           deceased: false,
+          conditionAgeOfDiagnosis: {},
         };
         addIndividual(child);
         addConnection({
@@ -237,9 +375,10 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
             y: pos.y,
             sex: childGender,
             label: "",
-            diseases: [],
+            conditions: [],
             affected: false,
             deceased: false,
+            conditionAgeOfDiagnosis: {},
           };
           addIndividual(child);
           addConnection({
@@ -259,11 +398,20 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
     const pos = getMousePosition(event);
     const individual = findIndividualAt(pos.x, pos.y);
     if (individual) {
-      const label = prompt("Enter label:", individual.label);
-      if (label !== null) {
-        saveHistory();
-        updateIndividual(individual.id, { label });
-      }
+      setContextMenu({
+        mouseX: event.clientX,
+        mouseY: event.clientY,
+        individualId: individual.id,
+      });
+      return;
+    }
+    const partnership = findPartnershipAt(pos.x, pos.y);
+    if (partnership) {
+      setPartnershipContextMenu({
+        mouseX: event.clientX,
+        mouseY: event.clientY,
+        partnershipId: partnership.id,
+      });
     }
   };
 
@@ -297,7 +445,6 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
                 : "crosshair",
         }}
       >
-        {/* Render partnership lines */}
         {partnerships.map((partnership) => (
           <PartnershipLine
             key={partnership.id}
@@ -306,12 +453,10 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
           />
         ))}
 
-        {/* Render connections */}
         {connections.map((connection) => (
           <ConnectionLine key={connection.id} connection={connection} />
         ))}
 
-        {/* Render individuals */}
         {individuals.map((individual) => (
           <IndividualSymbol
             key={individual.id}
@@ -322,6 +467,89 @@ const PedigreeCanvas: React.FC<PedigreeCanvasProps> = ({
           />
         ))}
       </svg>
+
+      <Menu
+        open={contextMenu !== null}
+        onClose={handleCloseMenu}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenu !== null
+            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+            : undefined
+        }
+      >
+        <ListSubheader sx={{ lineHeight: "32px", fontSize: 11 }}>
+          Add Partner
+        </ListSubheader>
+        <MenuItem dense onClick={() => handleAddPartner("male")}>
+          <ListItemIcon><Man fontSize="small" /></ListItemIcon>
+          <ListItemText>Male</ListItemText>
+        </MenuItem>
+        <MenuItem dense onClick={() => handleAddPartner("female")}>
+          <ListItemIcon><Woman fontSize="small" /></ListItemIcon>
+          <ListItemText>Female</ListItemText>
+        </MenuItem>
+        <MenuItem dense onClick={() => handleAddPartner("unknown")}>
+          <ListItemIcon><DiamondIcon /></ListItemIcon>
+          <ListItemText>Unknown</ListItemText>
+        </MenuItem>
+
+        <Divider />
+
+        <ListSubheader sx={{ lineHeight: "32px", fontSize: 11 }}>
+          Add Child
+        </ListSubheader>
+        <MenuItem dense onClick={() => handleAddChild("male")}>
+          <ListItemIcon><Man fontSize="small" /></ListItemIcon>
+          <ListItemText>Male</ListItemText>
+        </MenuItem>
+        <MenuItem dense onClick={() => handleAddChild("female")}>
+          <ListItemIcon><Woman fontSize="small" /></ListItemIcon>
+          <ListItemText>Female</ListItemText>
+        </MenuItem>
+        <MenuItem dense onClick={() => handleAddChild("unknown")}>
+          <ListItemIcon><DiamondIcon /></ListItemIcon>
+          <ListItemText>Unknown</ListItemText>
+        </MenuItem>
+
+        <Divider />
+
+        <MenuItem dense onClick={handleAddParents}>
+          <ListItemIcon>
+            <Man fontSize="small" />
+            <Woman fontSize="small" sx={{ ml: -0.5 }} />
+          </ListItemIcon>
+          <ListItemText>Add Parents (♂ + ♀)</ListItemText>
+        </MenuItem>
+      </Menu>
+
+      {/* Partnership relationship line context menu */}
+      <Menu
+        open={partnershipContextMenu !== null}
+        onClose={handleClosePartnershipMenu}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          partnershipContextMenu !== null
+            ? { top: partnershipContextMenu.mouseY, left: partnershipContextMenu.mouseX }
+            : undefined
+        }
+      >
+        <ListSubheader sx={{ lineHeight: "32px", fontSize: 11 }}>
+          Add Child to Relationship
+        </ListSubheader>
+        <MenuItem dense onClick={() => handleAddChildToPartnership("male")}>
+          <ListItemIcon><Man fontSize="small" /></ListItemIcon>
+          <ListItemText>Male</ListItemText>
+        </MenuItem>
+        <MenuItem dense onClick={() => handleAddChildToPartnership("female")}>
+          <ListItemIcon><Woman fontSize="small" /></ListItemIcon>
+          <ListItemText>Female</ListItemText>
+        </MenuItem>
+        <MenuItem dense onClick={() => handleAddChildToPartnership("unknown")}>
+          <ListItemIcon><DiamondIcon /></ListItemIcon>
+          <ListItemText>Unknown</ListItemText>
+        </MenuItem>
+      </Menu>
     </Box>
   );
 };

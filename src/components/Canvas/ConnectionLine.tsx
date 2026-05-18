@@ -13,6 +13,9 @@ const ConnectionLine: React.FC<ConnectionLineProps> = ({ connection }) => {
   const child = individuals.find((ind) => ind.id === connection.childId);
   if (!child) return null;
 
+  const childTopY = child.y - 25;
+  const hLineY = childTopY - 20;
+
   // Single-parent connection
   if (connection.parentId) {
     const parent = individuals.find((ind) => ind.id === connection.parentId);
@@ -23,15 +26,23 @@ const ConnectionLine: React.FC<ConnectionLineProps> = ({ connection }) => {
           x1={parent.x}
           y1={parent.y}
           x2={parent.x}
-          y2={child.y}
+          y2={hLineY}
           stroke={COLORS.lineStroke}
           strokeWidth={2}
         />
         <line
           x1={parent.x}
-          y1={child.y}
+          y1={hLineY}
           x2={child.x}
-          y2={child.y}
+          y2={hLineY}
+          stroke={COLORS.lineStroke}
+          strokeWidth={2}
+        />
+        <line
+          x1={child.x}
+          y1={hLineY}
+          x2={child.x}
+          y2={childTopY}
           stroke={COLORS.lineStroke}
           strokeWidth={2}
         />
@@ -59,21 +70,27 @@ const ConnectionLine: React.FC<ConnectionLineProps> = ({ connection }) => {
 
   return (
     <g>
-      {/* Vertical line from partnership midpoint down */}
       <line
         x1={midX}
         y1={midY}
         x2={midX}
-        y2={child.y}
+        y2={hLineY}
         stroke={COLORS.lineStroke}
         strokeWidth={2}
       />
-      {/* Horizontal line to child */}
       <line
         x1={midX}
-        y1={child.y}
+        y1={hLineY}
         x2={child.x}
-        y2={child.y}
+        y2={hLineY}
+        stroke={COLORS.lineStroke}
+        strokeWidth={2}
+      />
+      <line
+        x1={child.x}
+        y1={hLineY}
+        x2={child.x}
+        y2={childTopY}
         stroke={COLORS.lineStroke}
         strokeWidth={2}
       />
